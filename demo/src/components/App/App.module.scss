@@ -1,0 +1,38 @@
+$shadow-color: #CED9E0;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.input {
+  display: block;
+  width: 680px;
+  padding: 10px;
+  margin-top: 60px;
+  margin-bottom: 80px;
+  border: 1px solid #394b59;
+  border-radius: 6px;
+  box-shadow: 0 0 0 0 $shadow-color;
+  transition: box-shadow 0.08s linear;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px $shadow-color;
+  }
+}
+
+.imageContainer {
+  width: 380px;
+  height: 380px;
+  margin-bottom: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.notice {
+  color: #999;
+}
