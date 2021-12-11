@@ -14,6 +14,7 @@
     "dev": "react-scripts start",
     "build": "react-scripts build"
   },
+  "homepage": ".",
   "eslintConfig": {
     "extends": [
       "react-app",
