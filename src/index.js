@@ -1104,7 +1104,7 @@ QRCode.prototype.svg = function () {
         let px = x * xsize;
         let py = y * ysize;
 
-        // Определяем скругленность углов по наличию соседей
+        // Round corners checking neighbors
         let nc1 = !(getProp(modules, [x - 1, y]) || getProp(modules, [x, y - 1]));
         let nc2 = !(getProp(modules, [x + 1, y]) || getProp(modules, [x, y - 1]));
         let nc3 = !(getProp(modules, [x + 1, y]) || getProp(modules, [x, y + 1]));
@@ -1140,7 +1140,6 @@ QRCode.prototype.svg = function () {
           return result;
         }
 
-        // Дробные цифры это нахлёст, чтоб не было зазоров
         modrect +=
           indent +
           `<path d="${rightRoundedRect(
