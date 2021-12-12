@@ -21,13 +21,13 @@ import QrCode from 'sexy-qr';
 
 const svgCode = new QrCode({
   content: 'https://en.wikipedia.org/wiki/QR_code',
-  ecl: 'M',
+  ecl: 'M', // 'L' | 'M' | 'Q' | 'H'
   join: true,
   color: '#182026',
-  width: 380,
-  height: 380,
-  dotRadius: 380,
-}).svg()
+  circleCorners: true,
+  size: 380, // px
+  dotRadius: 35, // %
+}).svg();
 ```
 
 ## License
