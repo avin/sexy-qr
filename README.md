@@ -26,6 +26,7 @@ const svgCode = new QrCode({
   color: '#182026',
   width: 380,
   height: 380,
+  dotRadius: 380,
 }).svg()
 ```
 

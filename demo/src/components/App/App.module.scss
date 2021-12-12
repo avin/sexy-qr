@@ -8,17 +8,34 @@ $shadow-color: #ced9e0;
   padding: 0 10px;
 }
 
-.input {
-  display: block;
-  width: 680px;
+.controls {
+  width: 480px;
   max-width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+
+  & > * + * {
+    margin-left: 20px;
+  }
+}
+
+.label{
+  display: block;
+}
+
+.row{
+  // flex-direction: column;
+}
+
+.input, .select {
+  display: block;
   padding: 10px;
-  margin-top: 60px;
-  margin-bottom: 80px;
   border: 1px solid #394b59;
   border-radius: 6px;
   box-shadow: 0 0 0 0 $shadow-color;
   transition: box-shadow 0.08s linear;
+  width: 100%;
 
   &:focus {
     outline: none;
@@ -28,16 +45,17 @@ $shadow-color: #ced9e0;
 
 .imageContainer {
   max-width: 100%;
-  width: 380px;
-  height: 380px;
+  min-width: 380px;
+  min-height: 380px;
   margin-bottom: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 40px;
 }
 
 .qr {
-  width: 100%;
+  // width: 100%;
 }
 
 .notice {
