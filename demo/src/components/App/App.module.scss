@@ -1,5 +1,22 @@
 $shadow-color: #ced9e0;
 
+.title {
+  text-align: center;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #394b59;
+
+  a {
+    font-size: 20px;
+    font-weight: bold;
+    $color: #0e5a8a;
+    color: $color;
+    &:hover {
+      color: $color;
+    }
+  }
+}
+
 .container {
   display: flex;
   flex-direction: column;
@@ -20,15 +37,16 @@ $shadow-color: #ced9e0;
   }
 }
 
-.label{
+.label {
   display: block;
 }
 
-.row{
+.row {
   // flex-direction: column;
 }
 
-.input, .select {
+.input,
+.select {
   display: block;
   padding: 10px;
   border: 1px solid #394b59;
