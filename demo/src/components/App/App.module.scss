@@ -26,11 +26,15 @@ $shadow-color: #ced9e0;
 }
 
 .controls {
-  width: 480px;
+  width: 420px;
   max-width: 100%;
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
+
+  & > * {
+    width: 100%;
+  }
 
   & > * + * {
     margin-left: 20px;
@@ -54,11 +58,20 @@ $shadow-color: #ced9e0;
   box-shadow: 0 0 0 0 $shadow-color;
   transition: box-shadow 0.08s linear;
   width: 100%;
+  height: 46px;
+  background: white;
 
   &:focus {
     outline: none;
     box-shadow: 0 0 0 4px $shadow-color;
   }
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: none;
 }
 
 .imageContainer {

@@ -80,7 +80,6 @@ const App = () => {
               className={styles.select}
               onChange={handleChangeCircles}
               value={circles}
-              style={{ width: 70 }}
             >
               <option value="true">Yes</option>
               <option value="false">No</option>
@@ -95,7 +94,6 @@ const App = () => {
               className={styles.select}
               onChange={handleChangeEcl}
               value={ecl}
-              style={{ width: 70 }}
             >
               {['L', 'M', 'Q', 'H'].map((v) => (
                 <option value={v} key={v}>
@@ -113,7 +111,6 @@ const App = () => {
               className={styles.select}
               onChange={handleChangeDotRadius}
               value={dotRadius}
-              style={{ width: 80 }}
             >
               {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].map((v) => (
                 <option value={v} key={v}>
@@ -132,19 +129,17 @@ const App = () => {
               value={size}
               className={styles.input}
               placeholder="Size"
-              style={{ width: 70 }}
             />
           </div>
           <div>
             <label htmlFor="color">Color:</label>
             <input
               id="color"
-              type="text"
+              type="color"
               onChange={handleChangeColor}
               value={color}
               className={styles.input}
               placeholder="#000"
-              style={{ width: 90 }}
             />
           </div>
         </div>
