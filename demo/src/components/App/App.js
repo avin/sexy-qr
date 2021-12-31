@@ -36,7 +36,6 @@ const App = () => {
     if (!link) {
       return null;
     }
-    console.log('circles', circles);
     return `data:image/svg+xml;base64,${btoa(
       new QrCode({
         content: link,

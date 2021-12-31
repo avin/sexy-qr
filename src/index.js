@@ -1049,7 +1049,7 @@ function QRCode(options) {
     const result = encodeURI(content)
       .toString()
       .replace(/%[0-9a-fA-F]{2}/g, 'a');
-    return result.length + (result.length != content ? 3 : 0);
+    return result.length + (result.length !== content ? 3 : 0);
   }
 
   //Generate QR Code matrix
@@ -1143,16 +1143,16 @@ QRCode.prototype.svg = function () {
             ysize + ysize * 0.05,
             (xsize + xsize * 0.05) / radiusFactor,
             [nc1, nc2, nc3, nc4],
-          )}" fill="${options.color}" />${EOL}`;
+          )}"/>${EOL}`;
       }
     }
   }
 
   let svg = '';
   if (xmlDeclaration) {
-    svg += '<?xml version="1.0" standalone="yes"?>' + EOL;
+    svg += `<?xml version="1.0" standalone="yes"?>${EOL}`;
   }
-  svg += '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="' + width + '" height="' + height + '">' + EOL;
+  svg += `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${width}" height="${height}" fill="${options.color}">${EOL}`;
 
   svg += modrect;
 
@@ -1162,15 +1162,15 @@ QRCode.prototype.svg = function () {
   if (this.options.circleCorners) {
     // TopLeft
     svg += `<circle cx="${(xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize * 3)}" stroke="${options.color}" stroke-width="${xsize}" fill="none" />`;
-    svg += `<circle cx="${(xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}" fill="${options.color}" />`;
+    svg += `<circle cx="${(xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}"/>`;
 
     // TopRight
     svg += `<circle cx="${length * xsize - (xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize * 3)}" stroke="${options.color}" stroke-width="${xsize}" fill="none" />`;
-    svg += `<circle cx="${length * xsize - (xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}" fill="${options.color}" />`;
+    svg += `<circle cx="${length * xsize - (xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}"/>`;
 
     // BottomLeft
     svg += `<circle cx="${(xsize * 7) / 2}" cy="${length * xsize - (xsize * 7) / 2}" r="${(xsize * 3)}" stroke="${options.color}" stroke-width="${xsize}" fill="none" />`;
-    svg += `<circle cx="${(xsize * 7) / 2}" cy="${length * xsize - (xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}" fill="${options.color}" />`;
+    svg += `<circle cx="${(xsize * 7) / 2}" cy="${length * xsize - (xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}"/>`;
   }
 
   svg += '</svg>';
