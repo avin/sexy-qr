@@ -1,10 +1,9 @@
 $shadow-color: #ced9e0;
 
 .title {
-  text-align: center;
-  padding: 10px 0;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #394b59;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
   a {
     font-size: 20px;
@@ -29,6 +28,7 @@ $shadow-color: #ced9e0;
   width: 420px;
   max-width: 100%;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   margin-bottom: 20px;
 
@@ -37,7 +37,34 @@ $shadow-color: #ced9e0;
   }
 
   & > * + * {
-    margin-left: 20px;
+    margin-top: 12px;
+  }
+}
+
+.top {
+  margin-top: 10px;
+  border-bottom: 1px solid $shadow-color;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.main {
+  margin-bottom: 20px;
+}
+
+.top,
+.main {
+  display: flex;
+  border-bottom: 1px solid $shadow-color;
+
+  & > :nth-child(1) {
+    width: 300px;
+    padding: 0 20px;
+
+    border-right: 1px solid $shadow-color;
+  }
+  & > :nth-child(2) {
+    flex: 1;
   }
 }
 
@@ -45,12 +72,9 @@ $shadow-color: #ced9e0;
   display: block;
 }
 
-.row {
-  // flex-direction: column;
-}
-
 .input,
-.select {
+.select,
+.range {
   display: block;
   padding: 10px;
   border: 1px solid #394b59;
@@ -67,10 +91,16 @@ $shadow-color: #ced9e0;
   }
 }
 
-input[type="color"]::-webkit-color-swatch-wrapper {
+.range {
+  &:focus {
+    box-shadow: none;
+  }
+}
+
+input[type='color']::-webkit-color-swatch-wrapper {
   padding: 0;
 }
-input[type="color"]::-webkit-color-swatch {
+input[type='color']::-webkit-color-swatch {
   border: none;
 }
 
@@ -79,10 +109,7 @@ input[type="color"]::-webkit-color-swatch {
   min-width: 380px;
   min-height: 380px;
   margin-bottom: 80px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 40px;
+  padding: 30px;
 }
 
 .qr {
@@ -91,4 +118,22 @@ input[type="color"]::-webkit-color-swatch {
 
 .notice {
   color: #999;
+}
+
+.downloadContainer {
+  display: flex;
+  justify-content: center;
+}
+
+.downloadButton {
+  color: inherit;
+  font: inherit;
+  background-color: #e1e8ed;
+  border: 1px solid #bfccd6;
+  cursor: pointer;
+  border-radius: 5px;
+  padding: 5px 20px;
+  height: 40px;
+  margin-top: 40px;
+  font-weight: bold;
 }
