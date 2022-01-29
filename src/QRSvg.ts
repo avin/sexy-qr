@@ -20,6 +20,16 @@ type Cell = {
   isCornerBlock: boolean;
 };
 
+type LineSegment = {
+  processed: boolean;
+  p1: { x: number; y: number };
+  p2: { x: number; y: number };
+  cell: Cell;
+  cr: number;
+};
+
+type LineSegmentsWithCrops = LineSegment[] & { crops?: LineSegment[][] };
+
 const findNeighbors = (matrix: Cell[][], cell: Cell, pride: Pride, expectCells: Cell[] = []) => {
   expectCells.push(cell);
 
@@ -51,7 +61,7 @@ export class QGSvg {
 
   matrixSize!: number;
 
-  lines: Record<string, any> = {};
+  lines: Record<string, LineSegmentsWithCrops> = {};
 
   lastUniqId = 0;
 
@@ -140,6 +150,7 @@ export class QGSvg {
             if (cell.blockId) {
               lines[cell.blockId] = lines[cell.blockId] || [];
               lines[cell.blockId].push({
+                processed: false,
                 p1: { y: y + contour[idx][0][0], x: x + contour[idx][0][1] },
                 p2: { y: y + contour[idx][1][0], x: x + contour[idx][1][1] },
                 cell,
@@ -186,7 +197,7 @@ export class QGSvg {
         }
       };
       line[0].processed = true;
-      const result = [line[0]];
+      const result: LineSegmentsWithCrops = [line[0]];
       proc(line[0].p2.y, line[0].p2.x, result, line[0].cell);
       lines[key] = result;
       lines[key].crops = [];
@@ -205,7 +216,7 @@ export class QGSvg {
             seg.p1 = op2;
             return seg;
           });
-          lines[key].crops.push(cropResult);
+          lines[key]?.crops?.push(cropResult);
         } else {
           checkCrops = false;
         }
@@ -297,7 +308,7 @@ export class QGSvg {
 
     Object.keys(lines).forEach((key) => {
       let path = '';
-      for (const [lineIdx, line] of [lines[key], ...lines[key].crops].entries()) {
+      for (const [lineIdx, line] of [lines[key], ...(lines[key].crops as LineSegment[][])].entries()) {
         for (const [segIdx, seg] of line.entries()) {
           let {
             p1: { x, y },
