@@ -4,7 +4,6 @@ import { QRCodeLimitLength } from './QRCodeLimitLength';
 import { getProp } from './utils';
 
 type QRCodeOptions = {
-  padding: number;
   size: number;
   circleCorners: boolean;
   typeNumber: number;
@@ -19,7 +18,6 @@ type QRCodeOptions = {
 
 export class QRCode {
   options: QRCodeOptions = {
-    padding: 0,
     size: 256,
     circleCorners: false,
     typeNumber: 4,
@@ -44,16 +42,8 @@ export class QRCode {
       }
     }
 
-    if (typeof this.options.content !== 'string') {
-      throw new Error("Expected 'content' as string!");
-    }
-
     if (this.options.content.length === 0 /* || this.options.content.length > 7089 */) {
       throw new Error("Expected 'content' to be non-empty!");
-    }
-
-    if (!(this.options.padding >= 0)) {
-      throw new Error("Expected 'padding' value to be non-negative!");
     }
 
     if (!(this.options.size > 0)) {
@@ -150,9 +140,7 @@ export class QRCode {
     const options = this.options;
     const modules = this.qrcode.modules;
 
-    //Apply new lines and indents in SVG?
-    const pretty = typeof options.pretty != 'undefined' ? !!options.pretty : true;
-
+    const pretty = options.pretty;
     const indent = pretty ? '  ' : '';
     const EOL = pretty ? '\r\n' : '';
     const width = options.size;

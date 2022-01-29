@@ -5,7 +5,7 @@ export class QR8bitByte {
 
   data: string;
 
-  parsedData = [];
+  parsedData: (number[] | number)[] = [];
 
   constructor(data) {
     this.data = data;
@@ -14,23 +14,32 @@ export class QR8bitByte {
     let i = 0;
     const l = this.data.length;
     for (; i < l; i++) {
-      const byteArray = [];
       const code = this.data.charCodeAt(i);
 
+      let byteArray: number[];
       if (code > 0x10000) {
-        byteArray[0] = 0xf0 | ((code & 0x1c0000) >>> 18);
-        byteArray[1] = 0x80 | ((code & 0x3f000) >>> 12);
-        byteArray[2] = 0x80 | ((code & 0xfc0) >>> 6);
-        byteArray[3] = 0x80 | (code & 0x3f);
+        // prettier-ignore
+        byteArray = [
+          0xf0 | ((code & 0x1c0000) >>> 18),
+          0x80 | ((code & 0x3f000) >>> 12),
+          0x80 | ((code & 0xfc0) >>> 6),
+          0x80 | (code & 0x3f),
+        ];
       } else if (code > 0x800) {
-        byteArray[0] = 0xe0 | ((code & 0xf000) >>> 12);
-        byteArray[1] = 0x80 | ((code & 0xfc0) >>> 6);
-        byteArray[2] = 0x80 | (code & 0x3f);
+        // prettier-ignore
+        byteArray = [
+          0xe0 | ((code & 0xf000) >>> 12),
+          0x80 | ((code & 0xfc0) >>> 6),
+          0x80 | (code & 0x3f),
+        ]
       } else if (code > 0x80) {
-        byteArray[0] = 0xc0 | ((code & 0x7c0) >>> 6);
-        byteArray[1] = 0x80 | (code & 0x3f);
+        // prettier-ignore
+        byteArray = [
+          0xc0 | ((code & 0x7c0) >>> 6),
+          0x80 | (code & 0x3f),
+        ]
       } else {
-        byteArray[0] = code;
+        byteArray = [code];
       }
 
       this.parsedData.push(byteArray);

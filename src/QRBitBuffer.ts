@@ -1,5 +1,5 @@
 export class QRBitBuffer {
-  buffer = [];
+  buffer: number[] = [];
 
   length = 0;
 

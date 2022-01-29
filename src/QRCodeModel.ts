@@ -10,10 +10,10 @@ const PAD1 = 0x11;
 export class QRCodeModel {
   typeNumber!: number;
   errorCorrectLevel!: number;
-  modules = null;
+  modules: (boolean | null)[][] = [];
   moduleCount = 0;
-  dataCache = null;
-  dataList = [];
+  dataCache: number[] | null = null;
+  dataList: QR8bitByte[] = [];
 
   constructor(typeNumber, errorCorrectLevel) {
     this.typeNumber = typeNumber;
