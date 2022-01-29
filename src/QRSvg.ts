@@ -3,9 +3,10 @@ import { getProp, round, neighborOffsets, contour } from './utils';
 type QGSvgOptions = {
   size: number;
   radiusFactor: number;
+  cornerBlockRadiusFactor?: number;
   roundExternalCorners: boolean;
   roundInternalCorners: boolean;
-  cornerBlocksAsCircles: boolean;
+  cornerBlockAsCircles: boolean;
   fill: string;
 };
 
@@ -42,7 +43,7 @@ export class QGSvg {
     radiusFactor: 0.75,
     roundExternalCorners: true,
     roundInternalCorners: true,
-    cornerBlocksAsCircles: false,
+    cornerBlockAsCircles: false,
     fill: 'currentColor',
   };
 
@@ -56,11 +57,13 @@ export class QGSvg {
 
   pointSize = 0;
 
-  cr = 0;
-
   constructor(qrModules: (boolean | null)[][] = [], options: Partial<QGSvgOptions>) {
     for (const i in options) {
       this.options[i] = options[i];
+    }
+
+    if (this.options.cornerBlockRadiusFactor === undefined) {
+      this.options.cornerBlockRadiusFactor = this.options.radiusFactor;
     }
 
     if (!(this.options.size > 0)) {
@@ -69,7 +72,6 @@ export class QGSvg {
 
     this.matrixSize = qrModules.length;
     this.pointSize = this.options.size / this.matrixSize;
-    this.cr = (this.pointSize / 2) * Math.min(this.options.radiusFactor, 10);
 
     this.matrix = (() => {
       const result: Cell[][] = [];
@@ -118,6 +120,9 @@ export class QGSvg {
   detectLines() {
     const { lines, matrixSize, matrix } = this;
 
+    const pathRadius = (this.pointSize / 2) * Math.min(this.options.radiusFactor, 10);
+    const cornerBlockPathRadius = (this.pointSize / 2) * Math.min(this.options.cornerBlockRadiusFactor as number, 10);
+
     for (let y = 0; y < matrixSize; y++) {
       for (let x = 0; x < matrixSize; x++) {
         const cell = matrix[y][x];
@@ -125,7 +130,7 @@ export class QGSvg {
           continue;
         }
 
-        if (cell.isCornerBlock && this.options.cornerBlocksAsCircles) {
+        if (cell.isCornerBlock && this.options.cornerBlockAsCircles) {
           continue;
         }
 
@@ -138,6 +143,7 @@ export class QGSvg {
                 p1: { y: y + contour[idx][0][0], x: x + contour[idx][0][1] },
                 p2: { y: y + contour[idx][1][0], x: x + contour[idx][1][1] },
                 cell,
+                cr: cell.isCornerBlock ? cornerBlockPathRadius : pathRadius,
               });
             }
           }
@@ -171,9 +177,9 @@ export class QGSvg {
           nextSeg.processed = true;
           let resultSeg;
           if (nextSeg.p1.y === py && nextSeg.p1.x === px) {
-            resultSeg = { p1: nextSeg.p1, p2: nextSeg.p2 };
+            resultSeg = { p1: nextSeg.p1, p2: nextSeg.p2, cr: nextSeg.cr };
           } else if (nextSeg.p2.y === py && nextSeg.p2.x === px) {
-            resultSeg = { p1: nextSeg.p2, p2: nextSeg.p1 };
+            resultSeg = { p1: nextSeg.p2, p2: nextSeg.p1, cr: nextSeg.cr };
           }
           result.push(resultSeg);
           proc(resultSeg.p2.y, resultSeg.p2.x, result, nextSeg.cell);
@@ -223,10 +229,11 @@ export class QGSvg {
   }
 
   getSubPath(seg, prevSeg, roundExternalCorners, roundInternalCorners) {
-    const { pointSize, cr } = this;
+    const { pointSize } = this;
 
     let {
       p1: { x, y },
+      cr,
     } = seg;
 
     x = x * pointSize;
@@ -282,13 +289,11 @@ export class QGSvg {
   generate() {
     const {
       pointSize,
-      cr,
-      options: { roundExternalCorners, roundInternalCorners, size, fill, cornerBlocksAsCircles },
+      options: { roundExternalCorners, roundInternalCorners, size, fill, cornerBlockAsCircles },
     } = this;
 
     const { lines } = this;
     const paths: string[] = [];
-    const circles: string[] = [];
 
     Object.keys(lines).forEach((key) => {
       let path = '';
@@ -296,6 +301,7 @@ export class QGSvg {
         for (const [segIdx, seg] of line.entries()) {
           let {
             p1: { x, y },
+            cr,
           } = seg;
 
           x = x * pointSize;
@@ -335,11 +341,12 @@ export class QGSvg {
       paths.push(`<path d="${path}"/>`);
     });
 
-    if (cornerBlocksAsCircles) {
+    if (cornerBlockAsCircles) {
+      const offsetSize = this.pointSize * this.matrixSize - this.pointSize * 7;
       [
         [0, 0],
-        [this.pointSize * this.matrixSize - this.pointSize * 7, 0],
-        [0, this.pointSize * this.matrixSize - this.pointSize * 7],
+        [offsetSize, 0],
+        [0, offsetSize],
       ].forEach(([ox, oy]) => {
         const centerX = round((this.pointSize * 7) / 2 + ox);
         const centerY = round((this.pointSize * 7) / 2 + oy);
@@ -371,7 +378,6 @@ Z" />`);
     return `\
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" fill="${fill}">
   ${paths.join('\n  ')}
-  ${circles.join('\n  ')}
 </svg>`;
   }
 }

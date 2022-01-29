@@ -6,12 +6,11 @@ import { getUTF8Length } from './utils';
 
 type QRCodeOptions = {
   size: number;
-  cornerBlocksAsCircles: boolean;
-  typeNumber: number;
+  cornerBlockAsCircles: boolean;
   fill: string;
-  background: string;
   ecl: string;
   radiusFactor: number;
+  cornerBlockRadiusFactor?: number;
   content: string;
   roundExternalCorners: boolean;
   roundInternalCorners: boolean;
@@ -20,10 +19,8 @@ type QRCodeOptions = {
 export class QRCode {
   options: QRCodeOptions = {
     size: 256,
-    cornerBlocksAsCircles: false,
-    typeNumber: 4,
+    cornerBlockAsCircles: false,
     fill: 'currentColor',
-    background: '#ffffff',
     ecl: 'M',
     radiusFactor: 0.5,
     content: '',
@@ -115,8 +112,6 @@ export class QRCode {
       return type;
     }
 
-
-
     //Generate QR Code matrix
     const content = this.options.content;
     const type = _getTypeNumber(content, this.options.ecl);
@@ -135,119 +130,11 @@ export class QRCode {
       radiusFactor: options.radiusFactor,
       roundExternalCorners: options.roundExternalCorners,
       roundInternalCorners: options.roundInternalCorners,
-      cornerBlocksAsCircles: options.cornerBlocksAsCircles,
+      cornerBlockAsCircles: options.cornerBlockAsCircles,
+      cornerBlockRadiusFactor: options.cornerBlockRadiusFactor,
       fill: options.fill,
     });
 
     return qrSvg.generate();
-
-    // const pretty = options.pretty;
-    // const indent = pretty ? '  ' : '';
-    // const EOL = pretty ? '\r\n' : '';
-    // const width = options.size;
-    // const height = options.size;
-    // const length = modules.length;
-    // const xsize = width / length;
-    // const ysize = height / length;
-    //
-    // //Apply <?xml...?> declaration in SVG?
-    // const xmlDeclaration = options.xmlDeclaration;
-    //
-    // //Rectangles representing modules
-    // let modrect = '';
-    //
-    // for (let y = 0; y < length; y++) {
-    //   for (let x = 0; x < length; x++) {
-    //     if (this.options.circleCorners) {
-    //       if ((x < 8 && y < 8) || (x > length - 8 && y < 8) || (x < 8 && y > length - 8)) {
-    //         continue;
-    //       }
-    //     }
-    //
-    //     const module = modules[x][y];
-    //     if (module) {
-    //       let px = x * xsize;
-    //       let py = y * ysize;
-    //
-    //       // Round corners checking neighbors
-    //       let nc1 = !(getProp(modules, [x - 1, y]) || getProp(modules, [x, y - 1]));
-    //       let nc2 = !(getProp(modules, [x + 1, y]) || getProp(modules, [x, y - 1]));
-    //       let nc3 = !(getProp(modules, [x + 1, y]) || getProp(modules, [x, y + 1]));
-    //       let nc4 = !(getProp(modules, [x - 1, y]) || getProp(modules, [x, y + 1]));
-    //
-    //       const rv = (v) => Math.floor(v * 100) / 100;
-    //
-    //       const rightRoundedRect = (x, y, width, height, radius, corners) => {
-    //         x = rv(x);
-    //         y = rv(y);
-    //         radius = rv(radius);
-    //
-    //         let result = 'M' + x + ',' + y;
-    //         result += 'h' + rv(width - corners[1] * radius);
-    //         if (corners[1]) {
-    //           result += 'a' + radius + ',' + radius + ' 0 0 1 ' + radius + ',' + radius;
-    //         }
-    //         result += 'v' + rv(height - (corners[1] + corners[2]) * radius);
-    //         if (corners[2]) {
-    //           result += 'a' + radius + ',' + radius + ' 0 0 1 ' + -radius + ',' + radius;
-    //         }
-    //         result += 'h' + -1 * rv(width - (corners[2] + corners[3]) * radius);
-    //         if (corners[3]) {
-    //           result += 'a' + radius + ',' + radius + ' 0 0 1 ' + -radius + ',' + -radius;
-    //         }
-    //         result += 'v' + -rv(height - (corners[3] + corners[0]) * radius);
-    //         if (corners[0]) {
-    //           result += 'a' + radius + ',' + radius + ' 0 0 1 ' + radius + ',' + -radius;
-    //         }
-    //
-    //         result += 'z';
-    //
-    //         return result;
-    //       };
-    //
-    //       const r = this.options.dotRadius;
-    //       const radiusFactor = Math.max(100 / r, 2);
-    //       modrect +=
-    //         indent +
-    //         `<path d="${rightRoundedRect(
-    //           px - xsize * 0.025,
-    //           py - ysize * 0.025,
-    //           xsize + xsize * 0.05,
-    //           ysize + ysize * 0.05,
-    //           (xsize + xsize * 0.05) / radiusFactor,
-    //           [nc1, nc2, nc3, nc4],
-    //         )}"/>${EOL}`;
-    //     }
-    //   }
-    // }
-    //
-    // let svg = '';
-    // if (xmlDeclaration) {
-    //   svg += `<?xml version="1.0" standalone="yes"?>${EOL}`;
-    // }
-    // svg += `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${width}" height="${height}" fill="${options.color}">${EOL}`;
-    //
-    // svg += modrect;
-    //
-    // /* Circles in corners */
-    //
-    // // prettier-ignore
-    // if (this.options.circleCorners) {
-    //   // TopLeft
-    //   svg += `<circle cx="${(xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize * 3)}" stroke="${options.color}" stroke-width="${xsize}" fill="none" />`;
-    //   svg += `<circle cx="${(xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}"/>`;
-    //
-    //   // TopRight
-    //   svg += `<circle cx="${length * xsize - (xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize * 3)}" stroke="${options.color}" stroke-width="${xsize}" fill="none" />`;
-    //   svg += `<circle cx="${length * xsize - (xsize * 7) / 2}" cy="${(xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}"/>`;
-    //
-    //   // BottomLeft
-    //   svg += `<circle cx="${(xsize * 7) / 2}" cy="${length * xsize - (xsize * 7) / 2}" r="${(xsize * 3)}" stroke="${options.color}" stroke-width="${xsize}" fill="none" />`;
-    //   svg += `<circle cx="${(xsize * 7) / 2}" cy="${length * xsize - (xsize * 7) / 2}" r="${(xsize)}" stroke="${options.color}" stroke-width="${xsize}"/>`;
-    // }
-    //
-    // svg += '</svg>';
-    //
-    // return svg;
   }
 }

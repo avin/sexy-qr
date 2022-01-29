@@ -2,12 +2,6 @@
 
 Sexy SVG QR-code generator
 
-## Demo
-
-[ >> [Online demo](https://avin.github.io/sexy-qr) << ]
-
-[![Preview](./assets/example.svg)](https://avin.github.io/sexy-qr)
-
 ## Install
 
 ```sh
@@ -20,15 +14,25 @@ npm install sexy-qr
 import QrCode from 'sexy-qr';
 
 const svgCode = new QrCode({
-  content: 'https://en.wikipedia.org/wiki/QR_code',
+  content: 'https://avin.github.io/sexy-qr',
   ecl: 'M', // 'L' | 'M' | 'Q' | 'H'
-  join: true,
-  color: '#182026',
-  circleCorners: true,
+  fill: '#182026',
+  cornerBlockAsCircles: true,
   size: 380, // px
-  dotRadius: 35, // %
+  radiusFactor: 0.75, // 0-1
+  cornerBlockRadiusFactor: 2, // 0-3
+  roundExternalCorners: true,
+  roundInternalCorners: true,
 }).svg();
 ```
+
+## Demo
+
+[ >> [Online demo](https://avin.github.io/sexy-qr) << ]
+
+| Example 1                                                      | Example 2                                                      | Example 3                                                      |
+| -------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
+| [![Preview](./assets/ex1.svg)](https://avin.github.io/sexy-qr) | [![Preview](./assets/ex2.svg)](https://avin.github.io/sexy-qr) | [![Preview](./assets/ex3.svg)](https://avin.github.io/sexy-qr) |
 
 ## License
 
