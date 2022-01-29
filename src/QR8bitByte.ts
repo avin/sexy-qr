@@ -1,18 +1,14 @@
-// @ts-nocheck
-
 import { QRMode } from './QRMode';
 
 export class QR8bitByte {
   mode = QRMode.MODE_8BIT_BYTE;
 
-  data: unknown;
+  data: string;
 
   parsedData = [];
 
   constructor(data) {
-
     this.data = data;
-
 
     // Added to support UTF-8 Characters
     let i = 0;

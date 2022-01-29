@@ -1,8 +1,9 @@
-// @ts-nocheck
-
 import { QRErrorCorrectLevel } from './QRErrorCorrectLevel';
 
 export class QRRSBlock {
+  totalCount!: number;
+  dataCount!: number;
+
   constructor(totalCount, dataCount) {
     this.totalCount = totalCount;
     this.dataCount = dataCount;

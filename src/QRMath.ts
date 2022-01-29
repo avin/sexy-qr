@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 export const [EXP_TABLE, LOG_TABLE] = (() => {
   const EXP_TABLE = new Array(256);
   const LOG_TABLE = new Array(256);

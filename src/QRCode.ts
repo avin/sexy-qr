@@ -1,27 +1,28 @@
-// @ts-nocheck
-
 import { QRCodeModel } from './QRCodeModel';
 import { QRErrorCorrectLevel } from './QRErrorCorrectLevel';
 import { QRCodeLimitLength } from './QRCodeLimitLength';
 import { getProp } from './utils';
 
 export class QRCode {
+  options = {
+    padding: 0,
+    size: 256,
+    circleCorners: false,
+    typeNumber: 4,
+    color: '#000000',
+    background: '#ffffff',
+    ecl: 'M',
+    dotRadius: 50,
+    content: '',
+    // SVG?
+    pretty: false,
+    xmlDeclaration: false,
+  };
 
+  qrcode: QRCodeModel;
 
   constructor(options) {
     const instance = this;
-
-    //Default options
-    this.options = {
-      padding: 0,
-      size: 256,
-      circleCorners: false,
-      typeNumber: 4,
-      color: '#000000',
-      background: '#ffffff',
-      ecl: 'M',
-      dotRadius: 50,
-    };
 
     //In case the options is string
     if (typeof options === 'string') {
@@ -140,7 +141,7 @@ export class QRCode {
   }
 
   svg() {
-    const options = this.options || {};
+    const options = this.options;
     const modules = this.qrcode.modules;
 
     //Apply new lines and indents in SVG?
@@ -155,7 +156,7 @@ export class QRCode {
     const ysize = height / length;
 
     //Apply <?xml...?> declaration in SVG?
-    const xmlDeclaration = typeof options.xmlDeclaration != 'undefined' ? !!options.xmlDeclaration : true;
+    const xmlDeclaration = options.xmlDeclaration;
 
     //Rectangles representing modules
     let modrect = '';
@@ -181,7 +182,7 @@ export class QRCode {
 
           const rv = (v) => Math.floor(v * 100) / 100;
 
-          function rightRoundedRect(x, y, width, height, radius, corners) {
+          const rightRoundedRect = (x, y, width, height, radius, corners) => {
             x = rv(x);
             y = rv(y);
             radius = rv(radius);
@@ -207,7 +208,7 @@ export class QRCode {
             result += 'z';
 
             return result;
-          }
+          };
 
           const r = this.options.dotRadius;
           const radiusFactor = Math.max(100 / r, 2);

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 export const QRErrorCorrectLevel = {
   L: 1,
   M: 0,

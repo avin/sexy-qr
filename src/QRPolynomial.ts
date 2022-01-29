@@ -1,8 +1,8 @@
-// @ts-nocheck
-
 import * as QRMath from './QRMath';
 
 export class QRPolynomial {
+  num: number[];
+
   constructor(num, shift) {
     if (num.length === undefined) {
       throw new Error(num.length + '/' + shift);

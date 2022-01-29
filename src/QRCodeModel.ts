@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { QR8bitByte } from './QR8bitByte';
 import { QRRSBlock } from './QRRSBlock';
 import { QRBitBuffer } from './QRBitBuffer';
@@ -10,13 +8,16 @@ const PAD0 = 0xec;
 const PAD1 = 0x11;
 
 export class QRCodeModel {
+  typeNumber!: number;
+  errorCorrectLevel!: number;
+  modules = null;
+  moduleCount = 0;
+  dataCache = null;
+  dataList = [];
+
   constructor(typeNumber, errorCorrectLevel) {
     this.typeNumber = typeNumber;
     this.errorCorrectLevel = errorCorrectLevel;
-    this.modules = null;
-    this.moduleCount = 0;
-    this.dataCache = null;
-    this.dataList = [];
   }
 
   addData(data) {
