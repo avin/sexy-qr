@@ -4,12 +4,12 @@ import styles from './App.module.scss';
 import GitHubLink from './GitHubLink/GitHubLink';
 
 const App = () => {
-  const [link, setLink] = useState('https://github.com/avin/sexy-qr');
+  const [content, setContent] = useState('https://github.com/avin/sexy-qr');
   const [size, setSize] = useState('380');
   const [color, setColor] = useState('#182026');
   const [circles, setCircles] = useState('true');
   const [ecl, setEcl] = useState('M');
-  const [dotRadius, setDotRadius] = useState(35);
+  const [radiusFactor, setRadiusFactor] = useState(0.75);
 
   const handleChangeColor = useCallback((e) => {
     setColor(e.target.value);
@@ -17,8 +17,8 @@ const App = () => {
   const handleChangeCircles = useCallback((e) => {
     setCircles(e.target.value);
   }, []);
-  const handleChangeLink = useCallback((e) => {
-    setLink(e.target.value);
+  const handleChangeContent = useCallback((e) => {
+    setContent(e.target.value);
   }, []);
 
   const handleChangeSize = useCallback((e) => {
@@ -28,24 +28,24 @@ const App = () => {
   const handleChangeEcl = useCallback((e) => {
     setEcl(e.target.value);
   }, []);
-  const handleChangeDotRadius = useCallback((e) => {
-    setDotRadius(e.target.value);
+  const handleChangeRadiusFactor = useCallback((e) => {
+    setRadiusFactor(e.target.value);
   }, []);
 
   const svgCode = useMemo(() => {
-    if (!link) {
+    if (!content) {
       return null;
     }
     return new QrCode({
-      content: link,
-      ecl: ecl,
+      content,
+      ecl,
       join: true,
-      color: color,
+      color,
       circleCorners: circles === 'true',
       size: Number(size) || 1,
-      dotRadius: dotRadius,
+      radiusFactor,
     }).svg();
-  }, [link, ecl, dotRadius, size, circles, color]);
+  }, [content, ecl, radiusFactor, size, circles, color]);
 
   const qrCodeSrc = useMemo(() => {
     if (!svgCode) {
@@ -76,12 +76,12 @@ const App = () => {
       <div className={styles.container}>
         <div className={styles.controls}>
           <div style={{ width: '100%' }}>
-            <label htmlFor="link">Link:</label>
+            <label htmlFor="content">Content:</label>
             <input
-              id="link"
+              id="content"
               type="text"
-              onChange={handleChangeLink}
-              value={link}
+              onChange={handleChangeContent}
+              value={content}
               className={styles.input}
               placeholder="Encoding string..."
             />
@@ -115,17 +115,17 @@ const App = () => {
           </div>
 
           <div>
-            <label htmlFor="dotRadius">DotRadius:</label>
+            <label htmlFor="radiusFactor">RadiusFactor:</label>
             <select
-              name="dotRadius"
-              id="dotRadius"
+              name="radiusFactor"
+              id="radiusFactor"
               className={styles.select}
-              onChange={handleChangeDotRadius}
-              value={dotRadius}
+              onChange={handleChangeRadiusFactor}
+              value={radiusFactor}
             >
-              {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].map((v) => (
+              {[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].map((v) => (
                 <option value={v} key={v}>
-                  {v}
+                  {v.toFixed(1)}
                 </option>
               ))}
             </select>

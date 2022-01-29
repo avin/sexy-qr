@@ -7,7 +7,7 @@ export const getProp = (object, keys, defaultVal = undefined) => {
   return object === undefined ? defaultVal : object;
 };
 
-export const round = (val: number, precision = 1) => {
+export const round = (val: number, precision = 1e1) => {
   return Math.round(val * precision) / precision;
 };
 
@@ -36,3 +36,10 @@ export const contour = [
     [1, 1],
   ],
 ];
+
+export const getUTF8Length = (content) => {
+  const result = encodeURI(content)
+    .toString()
+    .replace(/%[0-9a-fA-F]{2}/g, 'a');
+  return result.length + (result.length !== content ? 3 : 0);
+};

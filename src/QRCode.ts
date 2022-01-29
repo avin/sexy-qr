@@ -2,6 +2,7 @@ import { QRCodeModel } from './QRCodeModel';
 import { QRErrorCorrectLevel } from './QRErrorCorrectLevel';
 import { QRCodeLimitLength } from './QRCodeLimitLength';
 import { QGSvg } from './QRSvg';
+import { getUTF8Length } from './utils';
 
 type QRCodeOptions = {
   size: number;
@@ -10,10 +11,10 @@ type QRCodeOptions = {
   color: string;
   background: string;
   ecl: string;
-  dotRadius: number;
+  radiusFactor: number;
   content: string;
-  pretty: boolean;
-  xmlDeclaration: boolean;
+  roundExternalCorners: boolean;
+  roundInternalCorners: boolean;
 };
 
 export class QRCode {
@@ -24,10 +25,10 @@ export class QRCode {
     color: '#000000',
     background: '#ffffff',
     ecl: 'M',
-    dotRadius: 50,
+    radiusFactor: 0.5,
     content: '',
-    pretty: false,
-    xmlDeclaration: false,
+    roundExternalCorners: true,
+    roundInternalCorners: true,
   };
 
   qrcode: QRCodeModel;
@@ -42,7 +43,7 @@ export class QRCode {
     }
 
     if (!(this.options.size > 0)) {
-      throw new Error("Expected 'size' or 'height' value to be higher than zero!");
+      throw new Error("Expected 'size' value to be higher than zero!");
     }
 
     //Gets the error correction level
@@ -65,9 +66,9 @@ export class QRCode {
       }
     }
 
-    //Get type number
+    // Get type number
     function _getTypeNumber(content, ecl) {
-      const length = _getUTF8Length(content);
+      const length = getUTF8Length(content);
 
       let type = 1;
       let limit = 0;
@@ -114,13 +115,7 @@ export class QRCode {
       return type;
     }
 
-    //Gets text length
-    function _getUTF8Length(content) {
-      const result = encodeURI(content)
-        .toString()
-        .replace(/%[0-9a-fA-F]{2}/g, 'a');
-      return result.length + (result.length !== content ? 3 : 0);
-    }
+
 
     //Generate QR Code matrix
     const content = this.options.content;
@@ -135,9 +130,12 @@ export class QRCode {
     const options = this.options;
     const modules = this.qrcode.modules;
 
-    console.log(options.size);
-
-    const qrSvg = new QGSvg(modules, { size: options.size });
+    const qrSvg = new QGSvg(modules, {
+      size: options.size,
+      radiusFactor: options.radiusFactor,
+      roundExternalCorners: options.roundExternalCorners,
+      roundInternalCorners: options.roundInternalCorners,
+    });
 
     return qrSvg.generate();
 

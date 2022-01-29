@@ -35,7 +35,7 @@ const findNeighbors = (matrix: Cell[][], cell: Cell, pride: Pride, expectCells: 
 
 export class QGSvg {
   options: QGSvgOptions = {
-    size: 100,
+    size: 0,
     radiusFactor: 0.75,
     roundExternalCorners: true,
     roundInternalCorners: true,
@@ -58,10 +58,16 @@ export class QGSvg {
       this.options[i] = options[i];
     }
 
+    if (!(this.options.size > 0)) {
+      throw new Error("Expected 'size' value to be higher than zero!");
+    }
+
     this.matrixSize = qrModules.length;
     this.pointSize = this.options.size / this.matrixSize;
+    this.cr = (this.pointSize / 2) * Math.min(this.options.radiusFactor, 10);
+
     console.log('this.pointSize', this.pointSize);
-    this.cr = (this.pointSize / 2) * this.options.radiusFactor;
+    console.log('this.cr', this.cr);
 
     this.matrix = (() => {
       const result: Cell[][] = [];
