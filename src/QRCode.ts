@@ -3,8 +3,22 @@ import { QRErrorCorrectLevel } from './QRErrorCorrectLevel';
 import { QRCodeLimitLength } from './QRCodeLimitLength';
 import { getProp } from './utils';
 
+type QRCodeOptions = {
+  padding: number;
+  size: number;
+  circleCorners: boolean;
+  typeNumber: number;
+  color: string;
+  background: string;
+  ecl: string;
+  dotRadius: number;
+  content: string;
+  pretty: boolean;
+  xmlDeclaration: boolean;
+};
+
 export class QRCode {
-  options = {
+  options: QRCodeOptions = {
     padding: 0,
     size: 256,
     circleCorners: false,
@@ -14,22 +28,14 @@ export class QRCode {
     ecl: 'M',
     dotRadius: 50,
     content: '',
-    // SVG?
     pretty: false,
     xmlDeclaration: false,
   };
 
   qrcode: QRCodeModel;
 
-  constructor(options) {
-    const instance = this;
-
-    //In case the options is string
-    if (typeof options === 'string') {
-      options = {
-        content: options,
-      };
-    }
+  constructor(options: Partial<QRCodeOptions>) {
+    Object.assign(this.options, options);
 
     //Merge options
     if (options) {
