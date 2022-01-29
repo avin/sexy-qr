@@ -175,7 +175,7 @@ export class QRCodeModel {
       }
     }
     for (let i = 0; i < 15; i++) {
-      var mod = !test && ((bits >> i) & 1) === 1;
+      const mod = !test && ((bits >> i) & 1) === 1;
       if (i < 8) {
         this.modules[8][this.moduleCount - i - 1] = mod;
       } else if (i < 9) {

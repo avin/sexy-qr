@@ -33,13 +33,8 @@ export class QRCode {
   qrcode: QRCodeModel;
 
   constructor(options: Partial<QRCodeOptions>) {
-    Object.assign(this.options, options);
-
-    //Merge options
-    if (options) {
-      for (var i in options) {
-        this.options[i] = options[i];
-      }
+    for (const i in options) {
+      this.options[i] = options[i];
     }
 
     if (this.options.content.length === 0 /* || this.options.content.length > 7089 */) {
@@ -128,9 +123,9 @@ export class QRCode {
     }
 
     //Generate QR Code matrix
-    var content = this.options.content;
-    var type = _getTypeNumber(content, this.options.ecl);
-    var ecl = _getErrorCorrectLevel(this.options.ecl);
+    const content = this.options.content;
+    const type = _getTypeNumber(content, this.options.ecl);
+    const ecl = _getErrorCorrectLevel(this.options.ecl);
     this.qrcode = new QRCodeModel(type, ecl);
     this.qrcode.addData(content);
     this.qrcode.make();
