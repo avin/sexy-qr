@@ -1,7 +1,6 @@
 import { QRCodeModel } from './QRCodeModel';
 import { QRErrorCorrectLevel } from './QRErrorCorrectLevel';
 import { QRCodeLimitLength } from './QRCodeLimitLength';
-import { getProp } from './utils';
 import { QGSvg } from './QRSvg';
 
 type QRCodeOptions = {

@@ -67,10 +67,10 @@ $shadow-color: #ced9e0;
   }
 }
 
-input[type="color"]::-webkit-color-swatch-wrapper {
+input[type='color']::-webkit-color-swatch-wrapper {
   padding: 0;
 }
-input[type="color"]::-webkit-color-swatch {
+input[type='color']::-webkit-color-swatch {
   border: none;
 }
 
@@ -91,4 +91,19 @@ input[type="color"]::-webkit-color-swatch {
 
 .notice {
   color: #999;
+}
+
+.downloadContainer {
+  margin-top: 42px;
+  text-align: center;
+}
+
+.downloadButton {
+  color: inherit;
+  font: inherit;
+  background-color: #e1e8ed;
+  border: 1px solid #bfccd6;
+  cursor: pointer;
+  border-radius: 5px;
+  padding: 5px 20px;
 }

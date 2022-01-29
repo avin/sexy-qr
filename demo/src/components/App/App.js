@@ -32,22 +32,40 @@ const App = () => {
     setDotRadius(e.target.value);
   }, []);
 
-  const qrCodeSrc = useMemo(() => {
+  const svgCode = useMemo(() => {
     if (!link) {
       return null;
     }
-    return `data:image/svg+xml;base64,${btoa(
-      new QrCode({
-        content: link,
-        ecl: ecl,
-        join: true,
-        color: color,
-        circleCorners: circles === 'true',
-        size: Number(size) || 1,
-        dotRadius: dotRadius,
-      }).svg(),
-    )}`;
+    return new QrCode({
+      content: link,
+      ecl: ecl,
+      join: true,
+      color: color,
+      circleCorners: circles === 'true',
+      size: Number(size) || 1,
+      dotRadius: dotRadius,
+    }).svg();
   }, [link, ecl, dotRadius, size, circles, color]);
+
+  const qrCodeSrc = useMemo(() => {
+    if (!svgCode) {
+      return null;
+    }
+    return `data:image/svg+xml;base64,${btoa(svgCode)}`;
+  }, [svgCode]);
+
+  const handleDownload = useCallback(() => {
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(svgCode));
+    element.setAttribute('download', 'qrcode.svg');
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }, [svgCode]);
 
   return (
     <div>
@@ -87,13 +105,7 @@ const App = () => {
 
           <div>
             <label htmlFor="ecl">ECL:</label>
-            <select
-              name="ecl"
-              id="ecl"
-              className={styles.select}
-              onChange={handleChangeEcl}
-              value={ecl}
-            >
+            <select name="ecl" id="ecl" className={styles.select} onChange={handleChangeEcl} value={ecl}>
               {['L', 'M', 'Q', 'H'].map((v) => (
                 <option value={v} key={v}>
                   {v}
@@ -145,7 +157,16 @@ const App = () => {
 
         <div className={styles.imageContainer}>
           {qrCodeSrc ? (
-            <img src={qrCodeSrc} alt="QR" className={styles.qr} />
+            // <img src={qrCodeSrc} alt="QR" className={styles.qr} />
+            <div>
+              <div dangerouslySetInnerHTML={{ __html: svgCode }} />
+
+              <div className={styles.downloadContainer}>
+                <button onClick={handleDownload} className={styles.downloadButton}>
+                  Download SVG
+                </button>
+              </div>
+            </div>
           ) : (
             <div className={styles.notice}>Type string to encode</div>
           )}

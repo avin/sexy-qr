@@ -1,4 +1,4 @@
-// ts-ignore
+import { getProp, round, neighborOffsets, contour } from './utils';
 
 type QGSvgOptions = {
   size: number;
@@ -14,41 +14,6 @@ type Cell = {
   x: number;
   y: number;
   meshId?: string;
-};
-
-const neighborOffsets = [
-  [-1, 0],
-  [0, -1],
-  [1, 0],
-  [0, 1],
-];
-
-const contour = [
-  [
-    [0, 0],
-    [0, 1],
-  ],
-  [
-    [0, 0],
-    [1, 0],
-  ],
-  [
-    [1, 0],
-    [1, 1],
-  ],
-  [
-    [0, 1],
-    [1, 1],
-  ],
-];
-
-const getProp = (object, keys, defaultVal = undefined) => {
-  keys = Array.isArray(keys) ? keys : keys.split('.');
-  object = object[keys[0]];
-  if (object && keys.length > 1) {
-    return getProp(object, keys.slice(1));
-  }
-  return object === undefined ? defaultVal : object;
 };
 
 const findNeighbors = (matrix: Cell[][], cell: Cell, pride: Pride, expectCells: Cell[] = []) => {
@@ -71,7 +36,7 @@ const findNeighbors = (matrix: Cell[][], cell: Cell, pride: Pride, expectCells: 
 export class QGSvg {
   options: QGSvgOptions = {
     size: 100,
-    radiusFactor: 0.5,
+    radiusFactor: 0.75,
     roundExternalCorners: true,
     roundInternalCorners: true,
   };
@@ -150,7 +115,6 @@ export class QGSvg {
           const neighborCell = getProp(matrix, [y + offset[0], x + offset[1]]);
           if (!neighborCell || neighborCell.meshId !== cell.meshId) {
             if (cell.meshId) {
-              // Нет соседа
               lines[cell.meshId] = lines[cell.meshId] || [];
               lines[cell.meshId].push({
                 p1: { y: y + contour[idx][0][0], x: x + contour[idx][0][1] },
@@ -177,7 +141,6 @@ export class QGSvg {
             return false;
           })
           .sort((a, b) => {
-            // В приоритете соседняя линия того же квадратика
             if (a.cell === oCell) {
               return -1;
             }
@@ -206,7 +169,6 @@ export class QGSvg {
 
       let checkCrops = true;
       while (checkCrops) {
-        // Если есть остатки - делаем контур для вырезания
         const notProcessedSeg = line.find((i) => !i.processed);
         if (notProcessedSeg) {
           notProcessedSeg.processed = true;
@@ -245,38 +207,52 @@ export class QGSvg {
   getSubPath(seg, prevSeg, roundExternalCorners, roundInternalCorners) {
     const { pointSize, cr } = this;
 
-    const { p1: p } = seg;
+    let {
+      p1: { x, y },
+    } = seg;
+
+    x = x * pointSize;
+    y = y * pointSize;
+
+    const xmcr = round(x - cr);
+    const xpcr = round(x + cr);
+
+    const ymcr = round(y - cr);
+    const ypcr = round(y + cr);
+
+    x = round(x);
+    y = round(y);
 
     const segDir = this.getDir(seg);
     const prevSegDir = this.getDir(prevSeg);
 
     let path = '';
-    if (roundExternalCorners && prevSegDir === 'we' && segDir === 'ns') {
-      path += `L${p.x * pointSize - cr} ${p.y * pointSize} `;
-      path += `Q${p.x * pointSize} ${p.y * pointSize} ${p.x * pointSize} ${p.y * pointSize + cr}`;
-    } else if (roundExternalCorners && prevSegDir === 'ns' && segDir === 'ew') {
-      path += `L${p.x * pointSize} ${p.y * pointSize - cr} `;
-      path += `Q${p.x * pointSize} ${p.y * pointSize} ${p.x * pointSize - cr} ${p.y * pointSize}`;
-    } else if (roundExternalCorners && prevSegDir === 'ew' && segDir === 'sn') {
-      path += `L${p.x * pointSize + cr} ${p.y * pointSize} `;
-      path += `Q${p.x * pointSize} ${p.y * pointSize} ${p.x * pointSize} ${p.y * pointSize - cr}`;
-    } else if (roundExternalCorners && prevSegDir === 'sn' && segDir === 'we') {
-      path += `L${p.x * pointSize} ${p.y * pointSize + cr} `;
-      path += `Q${p.x * pointSize} ${p.y * pointSize} ${p.x * pointSize + cr} ${p.y * pointSize}`;
-    } else if (roundInternalCorners && prevSegDir === 'sn' && segDir === 'ew') {
-      path += `L${p.x * pointSize} ${p.y * pointSize + cr} `;
-      path += `Q${p.x * pointSize} ${p.y * pointSize} ${p.x * pointSize - cr} ${p.y * pointSize}`;
-    } else if (roundInternalCorners && prevSegDir === 'ew' && segDir === 'ns') {
-      path += `L${p.x * pointSize + cr} ${p.y * pointSize} `;
-      path += `Q${p.x * pointSize} ${p.y * pointSize} ${p.x * pointSize} ${p.y * pointSize + cr}`;
-    } else if (roundInternalCorners && prevSegDir === 'ns' && segDir === 'we') {
-      path += `L${p.x * pointSize} ${p.y * pointSize - cr} `;
-      path += `Q${p.x * pointSize} ${p.y * pointSize} ${p.x * pointSize + cr} ${p.y * pointSize}`;
-    } else if (roundInternalCorners && prevSegDir === 'we' && segDir === 'sn') {
-      path += `L${p.x * pointSize - cr} ${p.y * pointSize} `;
-      path += `Q${p.x * pointSize} ${p.y * pointSize} ${p.x * pointSize} ${p.y * pointSize - cr}`;
+    if (cr && roundExternalCorners && prevSegDir === 'we' && segDir === 'ns') {
+      path += `L${xmcr} ${y} `;
+      path += `Q${x} ${y} ${x} ${ypcr}`;
+    } else if (cr && roundExternalCorners && prevSegDir === 'ns' && segDir === 'ew') {
+      path += `L${x} ${ymcr} `;
+      path += `Q${x} ${y} ${xmcr} ${y}`;
+    } else if (cr && roundExternalCorners && prevSegDir === 'ew' && segDir === 'sn') {
+      path += `L${xpcr} ${y} `;
+      path += `Q${x} ${y} ${x} ${ymcr}`;
+    } else if (cr && roundExternalCorners && prevSegDir === 'sn' && segDir === 'we') {
+      path += `L${x} ${ypcr} `;
+      path += `Q${x} ${y} ${xpcr} ${y}`;
+    } else if (cr && roundInternalCorners && prevSegDir === 'sn' && segDir === 'ew') {
+      path += `L${x} ${ypcr} `;
+      path += `Q${x} ${y} ${xmcr} ${y}`;
+    } else if (cr && roundInternalCorners && prevSegDir === 'ew' && segDir === 'ns') {
+      path += `L${xpcr} ${y} `;
+      path += `Q${x} ${y} ${x} ${ypcr}`;
+    } else if (cr && roundInternalCorners && prevSegDir === 'ns' && segDir === 'we') {
+      path += `L${x} ${ymcr} `;
+      path += `Q${x} ${y} ${xpcr} ${y}`;
+    } else if (cr && roundInternalCorners && prevSegDir === 'we' && segDir === 'sn') {
+      path += `L${xmcr} ${y} `;
+      path += `Q${x} ${y} ${x} ${ymcr}`;
     } else {
-      path += `L${p.x * pointSize} ${p.y * pointSize} `;
+      path += `L${x} ${y} `;
     }
     return path;
   }
@@ -289,7 +265,7 @@ export class QGSvg {
     const {
       pointSize,
       cr,
-      options: { roundExternalCorners, roundInternalCorners },
+      options: { roundExternalCorners, roundInternalCorners, size },
     } = this;
 
     const { lines } = this;
@@ -299,7 +275,19 @@ export class QGSvg {
       let path = '';
       for (const [lineIdx, line] of [lines[key], ...lines[key].crops].entries()) {
         for (const [segIdx, seg] of line.entries()) {
-          const { p1: from } = seg;
+          let {
+            p1: { x, y },
+          } = seg;
+
+          x = x * pointSize;
+          y = y * pointSize;
+
+          const xpcr = round(x + cr);
+          const ypcr = round(y + cr);
+
+          x = round(x);
+          y = round(y);
+
           const prevSeg = line[segIdx - 1] || line[line.length - 1];
           const nextSeg = line[segIdx + 1] || line[0];
 
@@ -309,12 +297,12 @@ export class QGSvg {
           if (segIdx === 0) {
             if (roundExternalCorners) {
               if (lineIdx === 0) {
-                path += `M${from.x * pointSize + cr} ${from.y * pointSize} `;
+                path += `M${xpcr} ${y} `;
               } else {
-                path += `M${from.x * pointSize} ${from.y * pointSize + cr} `;
+                path += `M${x} ${ypcr} `;
               }
             } else {
-              path += `M${from.x * pointSize} ${from.y * pointSize} `;
+              path += `M${x} ${y} `;
             }
           } else if (segIdx === line.length - 1) {
             path += this.getSubPath(seg, prevSeg, roundExternalCorners, roundInternalCorners);
@@ -328,6 +316,9 @@ export class QGSvg {
       paths.push(`<path d="${path}"/>`);
     });
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${this.options.size} ${this.options.size}">${paths.join('\n')}</svg>`;
+    return `\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+  ${paths.join('\n  ')}
+</svg>`;
   }
 }
