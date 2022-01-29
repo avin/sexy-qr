@@ -5,6 +5,8 @@ type QGSvgOptions = {
   radiusFactor: number;
   roundExternalCorners: boolean;
   roundInternalCorners: boolean;
+  cornerBlocksAsCircles: boolean;
+  fill: string;
 };
 
 type Pride = 1 | 0;
@@ -13,7 +15,8 @@ type Cell = {
   pride: Pride;
   x: number;
   y: number;
-  meshId?: string;
+  blockId?: string;
+  isCornerBlock: boolean;
 };
 
 const findNeighbors = (matrix: Cell[][], cell: Cell, pride: Pride, expectCells: Cell[] = []) => {
@@ -39,6 +42,8 @@ export class QGSvg {
     radiusFactor: 0.75,
     roundExternalCorners: true,
     roundInternalCorners: true,
+    cornerBlocksAsCircles: false,
+    fill: 'currentColor',
   };
 
   matrix!: Cell[][];
@@ -78,29 +83,35 @@ export class QGSvg {
             pride: val ? 1 : 0,
             x: idx,
             y: rowIdx,
-            meshId: undefined,
+            blockId: undefined,
+            isCornerBlock: false,
           } as Cell;
         });
       });
       return result;
     })();
 
-    this.detectMeshes();
+    this.detectBlocks();
     this.detectLines();
   }
 
-  detectMeshes() {
+  detectBlocks() {
     const { matrixSize, matrix } = this;
 
     for (let y = 0; y < matrixSize; y++) {
       for (let x = 0; x < matrixSize; x++) {
         const currCell = matrix[y][x];
-        if (currCell.meshId === undefined && currCell.pride === 1) {
+        if (currCell.blockId === undefined && currCell.pride === 1) {
           const cells: Cell[] = [];
           findNeighbors(matrix, currCell, 1, cells);
-          const meshId = this.getUniqId();
+          const blockId = this.getUniqId();
           cells.forEach((cell) => {
-            cell.meshId = meshId;
+            const { x, y } = cell;
+            cell.blockId = blockId;
+
+            if ((x < 8 && y < 8) || (x > this.matrixSize - 8 && y < 8) || (x < 8 && y > this.matrixSize - 8)) {
+              cell.isCornerBlock = true;
+            }
           });
         }
       }
@@ -113,16 +124,20 @@ export class QGSvg {
     for (let y = 0; y < matrixSize; y++) {
       for (let x = 0; x < matrixSize; x++) {
         const cell = matrix[y][x];
-        if (cell.meshId === undefined) {
+        if (cell.blockId === undefined) {
+          continue;
+        }
+
+        if (cell.isCornerBlock && this.options.cornerBlocksAsCircles) {
           continue;
         }
 
         neighborOffsets.forEach((offset, idx) => {
           const neighborCell = getProp(matrix, [y + offset[0], x + offset[1]]);
-          if (!neighborCell || neighborCell.meshId !== cell.meshId) {
-            if (cell.meshId) {
-              lines[cell.meshId] = lines[cell.meshId] || [];
-              lines[cell.meshId].push({
+          if (!neighborCell || neighborCell.blockId !== cell.blockId) {
+            if (cell.blockId) {
+              lines[cell.blockId] = lines[cell.blockId] || [];
+              lines[cell.blockId].push({
                 p1: { y: y + contour[idx][0][0], x: x + contour[idx][0][1] },
                 p2: { y: y + contour[idx][1][0], x: x + contour[idx][1][1] },
                 cell,
@@ -271,11 +286,12 @@ export class QGSvg {
     const {
       pointSize,
       cr,
-      options: { roundExternalCorners, roundInternalCorners, size },
+      options: { roundExternalCorners, roundInternalCorners, size, fill, cornerBlocksAsCircles },
     } = this;
 
     const { lines } = this;
     const paths: string[] = [];
+    const circles: string[] = [];
 
     Object.keys(lines).forEach((key) => {
       let path = '';
@@ -313,7 +329,7 @@ export class QGSvg {
           } else if (segIdx === line.length - 1) {
             path += this.getSubPath(seg, prevSeg, roundExternalCorners, roundInternalCorners);
             path += this.getSubPath(nextSeg, seg, roundExternalCorners, roundInternalCorners);
-            path += 'Z ';
+            path += 'Z';
           } else if (prevSegDir !== segDir) {
             path += this.getSubPath(seg, prevSeg, roundExternalCorners, roundInternalCorners);
           }
@@ -322,9 +338,43 @@ export class QGSvg {
       paths.push(`<path d="${path}"/>`);
     });
 
+    if (cornerBlocksAsCircles) {
+      [
+        [0, 0],
+        [this.pointSize * this.matrixSize - this.pointSize * 7, 0],
+        [0, this.pointSize * this.matrixSize - this.pointSize * 7],
+      ].forEach(([ox, oy]) => {
+        const centerX = round((this.pointSize * 7) / 2 + ox);
+        const centerY = round((this.pointSize * 7) / 2 + oy);
+
+        let outerRadius = round((this.pointSize * 7) / 2);
+        const innerRadius = round((this.pointSize * 7) / 2 - this.pointSize);
+
+        // Big circle
+        paths.push(`<path d="\
+M ${centerX} ${centerY - outerRadius} \
+A ${outerRadius} ${outerRadius} 0 1 0 ${centerX} ${round(centerY + outerRadius)} \
+A ${outerRadius} ${outerRadius} 0 1 0 ${centerX} ${round(centerY - outerRadius)} \
+Z \
+M ${centerX} ${centerY - innerRadius} \
+A ${innerRadius} ${innerRadius} 0 1 1 ${centerX} ${round(centerY + innerRadius)} \
+A ${innerRadius} ${innerRadius} 0 1 1 ${centerX} ${round(centerY - innerRadius)} \
+Z" />`);
+
+        // Small circle
+        outerRadius = round((this.pointSize * 7) / 2 - this.pointSize * 2);
+        paths.push(`<path d="\
+M ${centerX} ${centerY - outerRadius} \
+A ${outerRadius} ${outerRadius} 0 1 0 ${centerX} ${round(centerY + outerRadius)} \
+A ${outerRadius} ${outerRadius} 0 1 0 ${centerX} ${round(centerY - outerRadius)} \
+Z" />`);
+      });
+    }
+
     return `\
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" fill="${fill}">
   ${paths.join('\n  ')}
+  ${circles.join('\n  ')}
 </svg>`;
   }
 }

@@ -9,7 +9,7 @@ const App = () => {
   const [color, setColor] = useState('#182026');
   const [circles, setCircles] = useState('true');
   const [ecl, setEcl] = useState('M');
-  const [radiusFactor, setRadiusFactor] = useState(0.75);
+  const [radiusFactor, setRadiusFactor] = useState(0.7);
 
   const handleChangeColor = useCallback((e) => {
     setColor(e.target.value);
@@ -40,8 +40,8 @@ const App = () => {
       content,
       ecl,
       join: true,
-      color,
-      circleCorners: circles === 'true',
+      fill: color,
+      cornerBlocksAsCircles: circles === 'true',
       size: Number(size) || 1,
       radiusFactor,
     }).svg();

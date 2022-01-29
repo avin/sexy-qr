@@ -6,9 +6,9 @@ import { getUTF8Length } from './utils';
 
 type QRCodeOptions = {
   size: number;
-  circleCorners: boolean;
+  cornerBlocksAsCircles: boolean;
   typeNumber: number;
-  color: string;
+  fill: string;
   background: string;
   ecl: string;
   radiusFactor: number;
@@ -20,9 +20,9 @@ type QRCodeOptions = {
 export class QRCode {
   options: QRCodeOptions = {
     size: 256,
-    circleCorners: false,
+    cornerBlocksAsCircles: false,
     typeNumber: 4,
-    color: '#000000',
+    fill: 'currentColor',
     background: '#ffffff',
     ecl: 'M',
     radiusFactor: 0.5,
@@ -135,6 +135,8 @@ export class QRCode {
       radiusFactor: options.radiusFactor,
       roundExternalCorners: options.roundExternalCorners,
       roundInternalCorners: options.roundInternalCorners,
+      cornerBlocksAsCircles: options.cornerBlocksAsCircles,
+      fill: options.fill,
     });
 
     return qrSvg.generate();
