@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 export const QRMaskPattern = {
   PATTERN000: 0,
   PATTERN001: 1,

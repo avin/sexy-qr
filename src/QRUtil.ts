@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { QRMaskPattern } from './QRMaskPattern';
 import { QRPolynomial } from './QRPolynomial';
 import { QRMode } from './QRMode';

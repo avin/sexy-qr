@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 export function getProp(object, keys, defaultVal = undefined) {
   keys = Array.isArray(keys) ? keys : keys.split('.');
   object = object[keys[0]];

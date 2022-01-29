@@ -1,9 +1,13 @@
+// @ts-nocheck
+
 import { QRCodeModel } from './QRCodeModel';
 import { QRErrorCorrectLevel } from './QRErrorCorrectLevel';
 import { QRCodeLimitLength } from './QRCodeLimitLength';
 import { getProp } from './utils';
 
 export class QRCode {
+
+
   constructor(options) {
     const instance = this;
 

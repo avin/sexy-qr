@@ -1,7 +1,13 @@
+// @ts-nocheck
+
 import { QR8bitByte } from './QR8bitByte';
+import { QRRSBlock } from './QRRSBlock';
 import { QRBitBuffer } from './QRBitBuffer';
 import { QRPolynomial } from './QRPolynomial';
 import * as QRUtil from './QRUtil';
+
+const PAD0 = 0xec;
+const PAD1 = 0x11;
 
 export class QRCodeModel {
   constructor(typeNumber, errorCorrectLevel) {
@@ -12,9 +18,6 @@ export class QRCodeModel {
     this.dataCache = null;
     this.dataList = [];
   }
-
-  static PAD0 = 0xec;
-  static PAD1 = 0x11;
 
   addData(data) {
     const newData = new QR8bitByte(data);
@@ -56,7 +59,7 @@ export class QRCodeModel {
       this.setupTypeNumber(test);
     }
     if (this.dataCache == null) {
-      this.dataCache = QRCodeModel.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+      this.dataCache = this.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
     }
     this.mapData(this.dataCache, maskPattern);
   }
@@ -245,13 +248,13 @@ export class QRCodeModel {
       if (buffer.getLengthInBits() >= totalDataCount * 8) {
         break;
       }
-      buffer.put(QRCodeModel.PAD0, 8);
+      buffer.put(PAD0, 8);
       if (buffer.getLengthInBits() >= totalDataCount * 8) {
         break;
       }
-      buffer.put(QRCodeModel.PAD1, 8);
+      buffer.put(PAD1, 8);
     }
-    return QRCodeModel.createBytes(buffer, rsBlocks);
+    return this.createBytes(buffer, rsBlocks);
   }
 
   createBytes(buffer, rsBlocks) {

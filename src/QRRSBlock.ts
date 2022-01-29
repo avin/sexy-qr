@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { QRErrorCorrectLevel } from './QRErrorCorrectLevel';
 
 export class QRRSBlock {

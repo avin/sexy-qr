@@ -22,7 +22,7 @@
     "assets",
     "README.md"
   ],
-  "source": "src/index.js",
+  "source": "src/index.ts",
   "exports": {
     "require": "./dist/index.cjs",
     "default": "./dist/index.modern.js"

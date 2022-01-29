@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { QRMode } from './QRMode';
 
 export class QR8bitByte {

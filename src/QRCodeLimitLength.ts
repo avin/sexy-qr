@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 export const QRCodeLimitLength = [
   [17, 14, 11, 7],
   [32, 26, 20, 14],

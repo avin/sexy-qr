@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import * as QRMath from './QRMath';
 
 export class QRPolynomial {
