@@ -71,9 +71,6 @@ export class QGSvg {
     this.pointSize = this.options.size / this.matrixSize;
     this.cr = (this.pointSize / 2) * Math.min(this.options.radiusFactor, 10);
 
-    console.log('this.pointSize', this.pointSize);
-    console.log('this.cr', this.cr);
-
     this.matrix = (() => {
       const result: Cell[][] = [];
       qrModules.forEach((row, rowIdx) => {
