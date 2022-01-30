@@ -1,7 +1,7 @@
 {
   "name": "sexy-qr",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Sexy SVG QR-code generator",
   "author": "Avin Lambrero <avin.github@gmail.com> (https://github.com/avin/)",
   "license": "MIT",
