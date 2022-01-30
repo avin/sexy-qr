@@ -1,31 +1,41 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import QrCode from 'sexy-qr';
+import { QRCode, QRSvg } from 'sexy-qr';
 import styles from './App.module.scss';
 import GitHubLink from './GitHubLink/GitHubLink';
+import svgLogo from './svglogo';
 
 const App = () => {
   const [content, setContent] = useState('https://github.com/avin/sexy-qr');
   const [size, setSize] = useState('380');
   const [fill, setFill] = useState('#182026');
   const [circles, setCircles] = useState('false');
-  const [roundExternalCorners, setRoundExternalCorners] = useState('true');
-  const [roundInternalCorners, setRoundInternalCorners] = useState('true');
+  const [roundOuterCorners, setRoundOuterCorners] = useState('true');
+  const [roundInnerCorners, setRoundInnerCorners] = useState('true');
+  const [additionalContent, setAdditionalContent] = useState('false');
   const [ecl, setEcl] = useState('M');
   const [radiusFactor, setRadiusFactor] = useState('0.7');
   const [cornerBlockRadiusFactor, setCornerBlockRadiusFactor] = useState('2.0');
 
+  const handleChangeAdditionalContent = useCallback((e) => {
+    setAdditionalContent(e.target.value);
+  }, []);
+
   const handleChangeFill = useCallback((e) => {
     setFill(e.target.value);
   }, []);
+
   const handleChangeCircles = useCallback((e) => {
     setCircles(e.target.value);
   }, []);
-  const handleChangeRoundExternalCorners = useCallback((e) => {
-    setRoundExternalCorners(e.target.value);
+
+  const handleChangeRoundOuterCorners = useCallback((e) => {
+    setRoundOuterCorners(e.target.value);
   }, []);
-  const handleChangeRoundInternalCorners = useCallback((e) => {
-    setRoundInternalCorners(e.target.value);
+
+  const handleChangeRoundInnerCorners = useCallback((e) => {
+    setRoundInnerCorners(e.target.value);
   }, []);
+
   const handleChangeContent = useCallback((e) => {
     setContent(e.target.value);
   }, []);
@@ -37,9 +47,11 @@ const App = () => {
   const handleChangeEcl = useCallback((e) => {
     setEcl(e.target.value);
   }, []);
+
   const handleChangeRadiusFactor = useCallback((e) => {
     setRadiusFactor(e.target.value);
   }, []);
+
   const handleChangeCornerBlockRadiusFactor = useCallback((e) => {
     setCornerBlockRadiusFactor(e.target.value);
   }, []);
@@ -48,18 +60,36 @@ const App = () => {
     if (!content) {
       return null;
     }
-    return new QrCode({
+
+    const qrCode = new QRCode({
       content,
       ecl,
-      join: true,
+    });
+
+    const emptyCenterSize = 2 * Math.round(qrCode.size / 4 / 2) - 1;
+    const additionalContentFunc = (qrSvg) => {
+      const start = (qrSvg.matrixSize / 2 - emptyCenterSize / 2) * qrSvg.pointSize + qrSvg.pointSize / 2;
+      const size = emptyCenterSize * qrSvg.pointSize - qrSvg.pointSize;
+      const logoSrc = `data:image/svg+xml;base64,${btoa(svgLogo)}`;
+      return `<image x="${start}" y="${start}" width="${size}" height="${size}" href="${logoSrc}" />`;
+    };
+
+    if (additionalContent === 'true') {
+      qrCode.emptyCenter(emptyCenterSize);
+    }
+
+    const qrSvg = new QRSvg(qrCode, {
       fill: fill,
-      cornerBlockAsCircles: circles === 'true',
-      roundExternalCorners: roundExternalCorners === 'true',
-      roundInternalCorners: roundInternalCorners === 'true',
+      cornerBlocksAsCircles: circles === 'true',
+      roundOuterCorners: roundOuterCorners === 'true',
+      roundInnerCorners: roundInnerCorners === 'true',
       size: Number(size) || 1,
       radiusFactor,
       cornerBlockRadiusFactor,
-    }).svg();
+      preContent: `<!-- QR Content: ${content} -->`,
+      postContent: additionalContent === 'true' ? additionalContentFunc : undefined,
+    });
+    return qrSvg.svg;
   }, [
     content,
     ecl,
@@ -68,27 +98,18 @@ const App = () => {
     size,
     circles,
     fill,
-    roundExternalCorners,
-    roundInternalCorners,
+    roundOuterCorners,
+    roundInnerCorners,
+    additionalContent,
   ]);
-
-  const qrCodeSrc = useMemo(() => {
-    if (!svgCode) {
-      return null;
-    }
-    return `data:image/svg+xml;base64,${btoa(svgCode)}`;
-  }, [svgCode]);
 
   const handleDownload = useCallback(() => {
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(svgCode));
     element.setAttribute('download', 'qrcode.svg');
-
     element.style.display = 'none';
     document.body.appendChild(element);
-
     element.click();
-
     document.body.removeChild(element);
   }, [svgCode]);
 
@@ -119,7 +140,7 @@ const App = () => {
         <div>
           <div className={styles.controls}>
             <div>
-              <label htmlFor="circles">CornerBlockAsCircles:</label>
+              <label htmlFor="circles">CornerBlocksAsCircles:</label>
               <select
                 name="circles"
                 id="circles"
@@ -133,26 +154,27 @@ const App = () => {
             </div>
 
             <div>
-              <label htmlFor="circles">RoundExternalCorners:</label>
+              <label htmlFor="circles">RoundOuterCorners:</label>
               <select
-                name="roundExternalCorners"
-                id="roundExternalCorners"
+                name="roundOuterCorners"
+                id="roundOuterCorners"
                 className={styles.select}
-                onChange={handleChangeRoundExternalCorners}
-                value={roundExternalCorners}
+                onChange={handleChangeRoundOuterCorners}
+                value={roundOuterCorners}
               >
                 <option value="true">Yes</option>
                 <option value="false">No</option>
               </select>
             </div>
+
             <div>
-              <label htmlFor="circles">RoundInternalCorners:</label>
+              <label htmlFor="circles">RoundInnerCorners:</label>
               <select
-                name="roundInternalCorners"
-                id="roundInternalCorners"
+                name="roundInnerCorners"
+                id="roundInnerCorners"
                 className={styles.select}
-                onChange={handleChangeRoundInternalCorners}
-                value={roundInternalCorners}
+                onChange={handleChangeRoundInnerCorners}
+                value={roundInnerCorners}
               >
                 <option value="true">Yes</option>
                 <option value="false">No</option>
@@ -184,6 +206,7 @@ const App = () => {
                 onChange={handleChangeRadiusFactor}
               />
             </div>
+
             <div>
               <label htmlFor="cornerBlockRadiusFactor">CornerBlockRadiusFactor:</label>
               <input
@@ -210,6 +233,7 @@ const App = () => {
                 placeholder="Size"
               />
             </div>
+
             <div>
               <label htmlFor="fill">Fill:</label>
               <input
@@ -221,12 +245,26 @@ const App = () => {
                 placeholder="#000"
               />
             </div>
+
+            <div>
+              <label htmlFor="circles">AdditionalContent:</label>
+              <select
+                name="additionalContent"
+                id="additionalContent"
+                className={styles.select}
+                onChange={handleChangeAdditionalContent}
+                value={additionalContent}
+              >
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
           </div>
         </div>
+
         <div>
           <div className={styles.imageContainer}>
-            {qrCodeSrc ? (
-              // <img src={qrCodeSrc} alt="QR" className={styles.qr} />
+            {svgCode ? (
               <div>
                 <div dangerouslySetInnerHTML={{ __html: svgCode }} />
               </div>

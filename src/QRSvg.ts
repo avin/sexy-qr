@@ -1,13 +1,16 @@
 import { getProp, round, neighborOffsets, contour } from './utils';
+import { QRCode } from './QRCode';
 
-type QGSvgOptions = {
+type QRSvgOptions = {
   size: number;
   radiusFactor: number;
   cornerBlockRadiusFactor?: number;
-  roundExternalCorners: boolean;
-  roundInternalCorners: boolean;
-  cornerBlockAsCircles: boolean;
+  roundOuterCorners: boolean;
+  roundInnerCorners: boolean;
+  cornerBlocksAsCircles: boolean;
   fill: string;
+  preContent?: string | ((QRSvg) => string);
+  postContent?: string | ((QRSvg) => string);
 };
 
 type Pride = 1 | 0;
@@ -47,27 +50,29 @@ const findNeighbors = (matrix: Cell[][], cell: Cell, pride: Pride, expectCells: 
   }
 };
 
-export class QGSvg {
-  options: QGSvgOptions = {
+export class QRSvg {
+  private options: QRSvgOptions = {
     size: 0,
     radiusFactor: 0.75,
-    roundExternalCorners: true,
-    roundInternalCorners: true,
-    cornerBlockAsCircles: false,
+    roundOuterCorners: true,
+    roundInnerCorners: true,
+    cornerBlocksAsCircles: false,
     fill: 'currentColor',
   };
 
-  matrix!: Cell[][];
+  private matrix!: Cell[][];
 
-  matrixSize!: number;
+  paths: string[] = [];
 
-  lines: Record<string, LineSegmentsWithCrops> = {};
+  private readonly matrixSize!: number;
 
-  lastUniqId = 0;
+  private lines: Record<string, LineSegmentsWithCrops> = {};
 
-  pointSize = 0;
+  private lastUniqId = 0;
 
-  constructor(qrModules: (boolean | null)[][] = [], options: Partial<QGSvgOptions>) {
+  readonly pointSize!: number;
+
+  constructor(qrCode: QRCode, options: Partial<QRSvgOptions>) {
     for (const i in options) {
       this.options[i] = options[i];
     }
@@ -80,12 +85,12 @@ export class QGSvg {
       throw new Error("Expected 'size' value to be higher than zero!");
     }
 
-    this.matrixSize = qrModules.length;
+    this.matrixSize = qrCode.size;
     this.pointSize = this.options.size / this.matrixSize;
 
     this.matrix = (() => {
       const result: Cell[][] = [];
-      qrModules.forEach((row, rowIdx) => {
+      qrCode.matrix.forEach((row, rowIdx) => {
         result[rowIdx] = [];
         row.forEach((val, idx) => {
           result[rowIdx][idx] = {
@@ -102,9 +107,10 @@ export class QGSvg {
 
     this.detectBlocks();
     this.detectLines();
+    this.generatePaths();
   }
 
-  detectBlocks() {
+  private detectBlocks() {
     const { matrixSize, matrix } = this;
 
     for (let y = 0; y < matrixSize; y++) {
@@ -127,7 +133,7 @@ export class QGSvg {
     }
   }
 
-  detectLines() {
+  private detectLines() {
     const { lines, matrixSize, matrix } = this;
 
     const pathRadius = (this.pointSize / 2) * Math.min(this.options.radiusFactor, 10);
@@ -140,7 +146,7 @@ export class QGSvg {
           continue;
         }
 
-        if (cell.isCornerBlock && this.options.cornerBlockAsCircles) {
+        if (cell.isCornerBlock && this.options.cornerBlocksAsCircles) {
           continue;
         }
 
@@ -224,7 +230,7 @@ export class QGSvg {
     });
   }
 
-  getDir(seg) {
+  private getDir(seg) {
     if (seg.p1.x === seg.p2.x) {
       if (seg.p1.y > seg.p2.y) {
         return 'sn';
@@ -239,7 +245,7 @@ export class QGSvg {
     }
   }
 
-  getSubPath(seg, prevSeg, roundExternalCorners, roundInternalCorners) {
+  private getSubPath(seg, prevSeg, roundOuterCorners, roundInnerCorners) {
     const { pointSize } = this;
 
     let {
@@ -263,28 +269,28 @@ export class QGSvg {
     const prevSegDir = this.getDir(prevSeg);
 
     let path = '';
-    if (cr && roundExternalCorners && prevSegDir === 'we' && segDir === 'ns') {
+    if (cr && roundOuterCorners && prevSegDir === 'we' && segDir === 'ns') {
       path += `L${xmcr} ${y} `;
       path += `Q${x} ${y} ${x} ${ypcr}`;
-    } else if (cr && roundExternalCorners && prevSegDir === 'ns' && segDir === 'ew') {
+    } else if (cr && roundOuterCorners && prevSegDir === 'ns' && segDir === 'ew') {
       path += `L${x} ${ymcr} `;
       path += `Q${x} ${y} ${xmcr} ${y}`;
-    } else if (cr && roundExternalCorners && prevSegDir === 'ew' && segDir === 'sn') {
+    } else if (cr && roundOuterCorners && prevSegDir === 'ew' && segDir === 'sn') {
       path += `L${xpcr} ${y} `;
       path += `Q${x} ${y} ${x} ${ymcr}`;
-    } else if (cr && roundExternalCorners && prevSegDir === 'sn' && segDir === 'we') {
+    } else if (cr && roundOuterCorners && prevSegDir === 'sn' && segDir === 'we') {
       path += `L${x} ${ypcr} `;
       path += `Q${x} ${y} ${xpcr} ${y}`;
-    } else if (cr && roundInternalCorners && prevSegDir === 'sn' && segDir === 'ew') {
+    } else if (cr && roundInnerCorners && prevSegDir === 'sn' && segDir === 'ew') {
       path += `L${x} ${ypcr} `;
       path += `Q${x} ${y} ${xmcr} ${y}`;
-    } else if (cr && roundInternalCorners && prevSegDir === 'ew' && segDir === 'ns') {
+    } else if (cr && roundInnerCorners && prevSegDir === 'ew' && segDir === 'ns') {
       path += `L${xpcr} ${y} `;
       path += `Q${x} ${y} ${x} ${ypcr}`;
-    } else if (cr && roundInternalCorners && prevSegDir === 'ns' && segDir === 'we') {
+    } else if (cr && roundInnerCorners && prevSegDir === 'ns' && segDir === 'we') {
       path += `L${x} ${ymcr} `;
       path += `Q${x} ${y} ${xpcr} ${y}`;
-    } else if (cr && roundInternalCorners && prevSegDir === 'we' && segDir === 'sn') {
+    } else if (cr && roundInnerCorners && prevSegDir === 'we' && segDir === 'sn') {
       path += `L${xmcr} ${y} `;
       path += `Q${x} ${y} ${x} ${ymcr}`;
     } else {
@@ -293,14 +299,14 @@ export class QGSvg {
     return path;
   }
 
-  getUniqId() {
+  private getUniqId() {
     return String(this.lastUniqId++);
   }
 
-  generate() {
+  private generatePaths() {
     const {
       pointSize,
-      options: { roundExternalCorners, roundInternalCorners, size, fill, cornerBlockAsCircles },
+      options: { roundOuterCorners, roundInnerCorners, cornerBlocksAsCircles },
     } = this;
 
     const { lines } = this;
@@ -331,7 +337,7 @@ export class QGSvg {
           const prevSegDir = this.getDir(prevSeg);
 
           if (segIdx === 0) {
-            if (roundExternalCorners) {
+            if (roundOuterCorners) {
               if (lineIdx === 0) {
                 path += `M${xpcr} ${y} `;
               } else {
@@ -341,18 +347,18 @@ export class QGSvg {
               path += `M${x} ${y} `;
             }
           } else if (segIdx === line.length - 1) {
-            path += this.getSubPath(seg, prevSeg, roundExternalCorners, roundInternalCorners);
-            path += this.getSubPath(nextSeg, seg, roundExternalCorners, roundInternalCorners);
+            path += this.getSubPath(seg, prevSeg, roundOuterCorners, roundInnerCorners);
+            path += this.getSubPath(nextSeg, seg, roundOuterCorners, roundInnerCorners);
             path += 'Z';
           } else if (prevSegDir !== segDir) {
-            path += this.getSubPath(seg, prevSeg, roundExternalCorners, roundInternalCorners);
+            path += this.getSubPath(seg, prevSeg, roundOuterCorners, roundInnerCorners);
           }
         }
       }
       paths.push(`<path d="${path}"/>`);
     });
 
-    if (cornerBlockAsCircles) {
+    if (cornerBlocksAsCircles) {
       const offsetSize = this.pointSize * this.matrixSize - this.pointSize * 7;
       [
         [0, 0],
@@ -386,9 +392,29 @@ Z" />`);
       });
     }
 
+    this.paths = paths;
+  }
+
+  private svgAdditionalContent(additionalContent): string {
+    if (typeof additionalContent === 'function') {
+      return additionalContent(this);
+    }
+
+    if (typeof additionalContent === 'string') {
+      return additionalContent;
+    }
+
+    return additionalContent || '';
+  }
+
+  get svg() {
+    const { size, fill } = this.options;
+
     return `\
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" fill="${fill}">
-  ${paths.join('\n  ')}
+${this.svgAdditionalContent(this.options.preContent)}
+${this.paths.join('\n')}
+${this.svgAdditionalContent(this.options.postContent)}
 </svg>`;
   }
 }
