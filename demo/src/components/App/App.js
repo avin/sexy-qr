@@ -51,9 +51,8 @@ const App = () => {
     return new QrCode({
       content,
       ecl,
-      join: true,
       fill: fill,
-      cornerBlockAsCircles: circles === 'true',
+      cornerBlocksAsCircles: circles === 'true',
       roundExternalCorners: roundExternalCorners === 'true',
       roundInternalCorners: roundInternalCorners === 'true',
       size: Number(size) || 1,
@@ -119,7 +118,7 @@ const App = () => {
         <div>
           <div className={styles.controls}>
             <div>
-              <label htmlFor="circles">CornerBlockAsCircles:</label>
+              <label htmlFor="circles">CornerBlocksAsCircles:</label>
               <select
                 name="circles"
                 id="circles"

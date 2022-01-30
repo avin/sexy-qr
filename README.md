@@ -17,7 +17,7 @@ const svgCode = new QrCode({
   content: 'https://avin.github.io/sexy-qr',
   ecl: 'M', // 'L' | 'M' | 'Q' | 'H'
   fill: '#182026',
-  cornerBlockAsCircles: true,
+  cornerBlocksAsCircles: true,
   size: 380, // px
   radiusFactor: 0.75, // 0-1
   cornerBlockRadiusFactor: 2, // 0-3

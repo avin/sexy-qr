@@ -6,7 +6,7 @@ import { getUTF8Length } from './utils';
 
 type QRCodeOptions = {
   size: number;
-  cornerBlockAsCircles: boolean;
+  cornerBlocksAsCircles: boolean;
   fill: string;
   ecl: string;
   radiusFactor: number;
@@ -19,7 +19,7 @@ type QRCodeOptions = {
 export class QRCode {
   options: QRCodeOptions = {
     size: 256,
-    cornerBlockAsCircles: false,
+    cornerBlocksAsCircles: false,
     fill: 'currentColor',
     ecl: 'M',
     radiusFactor: 0.5,
@@ -130,7 +130,7 @@ export class QRCode {
       radiusFactor: options.radiusFactor,
       roundExternalCorners: options.roundExternalCorners,
       roundInternalCorners: options.roundInternalCorners,
-      cornerBlockAsCircles: options.cornerBlockAsCircles,
+      cornerBlocksAsCircles: options.cornerBlocksAsCircles,
       cornerBlockRadiusFactor: options.cornerBlockRadiusFactor,
       fill: options.fill,
     });

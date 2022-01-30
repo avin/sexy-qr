@@ -6,7 +6,7 @@ type QGSvgOptions = {
   cornerBlockRadiusFactor?: number;
   roundExternalCorners: boolean;
   roundInternalCorners: boolean;
-  cornerBlockAsCircles: boolean;
+  cornerBlocksAsCircles: boolean;
   fill: string;
 };
 
@@ -53,7 +53,7 @@ export class QGSvg {
     radiusFactor: 0.75,
     roundExternalCorners: true,
     roundInternalCorners: true,
-    cornerBlockAsCircles: false,
+    cornerBlocksAsCircles: false,
     fill: 'currentColor',
   };
 
@@ -140,7 +140,7 @@ export class QGSvg {
           continue;
         }
 
-        if (cell.isCornerBlock && this.options.cornerBlockAsCircles) {
+        if (cell.isCornerBlock && this.options.cornerBlocksAsCircles) {
           continue;
         }
 
@@ -300,7 +300,7 @@ export class QGSvg {
   generate() {
     const {
       pointSize,
-      options: { roundExternalCorners, roundInternalCorners, size, fill, cornerBlockAsCircles },
+      options: { roundExternalCorners, roundInternalCorners, size, fill, cornerBlocksAsCircles },
     } = this;
 
     const { lines } = this;
@@ -352,7 +352,7 @@ export class QGSvg {
       paths.push(`<path d="${path}"/>`);
     });
 
-    if (cornerBlockAsCircles) {
+    if (cornerBlocksAsCircles) {
       const offsetSize = this.pointSize * this.matrixSize - this.pointSize * 7;
       [
         [0, 0],
