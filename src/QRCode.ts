@@ -91,17 +91,20 @@ export class QRCode {
     return type;
   }
 
-  emptyCenter(emptySize: number) {
+  emptyCenter(emptySize: number, emptySizeHeight?: number) {
     const { size } = this;
+
+    emptySizeHeight = emptySizeHeight || emptySize;
 
     const halfSize = size / 2;
     const halfEmptySize = emptySize / 2;
+    const halfEmptySizeHeight = emptySizeHeight / 2;
 
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         if (
-          y >= halfSize - halfEmptySize &&
-          y < halfSize + halfEmptySize &&
+          y >= halfSize - halfEmptySizeHeight &&
+          y < halfSize + halfEmptySizeHeight &&
           x >= halfSize - halfEmptySize &&
           x < halfSize + halfEmptySize
         ) {
