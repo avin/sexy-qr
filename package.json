@@ -1,7 +1,7 @@
 {
   "name": "sexy-qr",
   "type": "module",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Sexy SVG QR-code generator",
   "author": "Avin Lambrero <avin.github@gmail.com> (https://github.com/avin/)",
   "license": "MIT",
@@ -30,6 +30,7 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.module.js",
   "unpkg": "./dist/index.umd.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "microbundle",
     "dev": "microbundle watch",
