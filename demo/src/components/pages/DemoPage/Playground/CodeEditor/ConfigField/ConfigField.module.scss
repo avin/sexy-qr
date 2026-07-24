@@ -1,7 +1,7 @@
 .field {
   display: inline-grid;
   width: min(270px, 38vw);
-  grid-template-columns: 64px minmax(72px, 1fr) 34px;
+  grid-template-columns: 64px minmax(72px, 1fr);
   align-items: center;
   gap: 0.65rem;
   margin-inline: 0.3rem;
@@ -54,12 +54,6 @@
     border-color: #ff7650;
     background: #1f2225;
   }
-}
-
-.readout {
-  color: rgba(255, 255, 255, 0.34);
-  font-size: 0.62rem;
-  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 680px) {

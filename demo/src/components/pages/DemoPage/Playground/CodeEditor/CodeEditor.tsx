@@ -282,16 +282,6 @@ export function CodeEditor({ code, config, onChange }: CodeEditorProps) {
           <Property>svg</Property>;
         </CodeLine>
       </FieldGroup>
-
-      <footer className={styles.footer}>
-        <span>
-          <i /> Input
-        </span>
-        <span>
-          <i /> Drag
-        </span>
-        <span>All values update the output live</span>
-      </footer>
     </section>
   );
 }

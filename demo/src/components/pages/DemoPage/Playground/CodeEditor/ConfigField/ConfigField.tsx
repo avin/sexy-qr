@@ -94,9 +94,6 @@ export function ConfigField({
           updateValue(typeof values === 'number' ? values : (values[0] ?? min))
         }
       />
-      <output className={styles.readout} htmlFor={id}>
-        {value}
-      </output>
     </Field>
   );
 }

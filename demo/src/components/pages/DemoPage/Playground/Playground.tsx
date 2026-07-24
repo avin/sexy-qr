@@ -62,7 +62,6 @@ export function Playground() {
           config={config}
           svg={result.svg}
           error={result.error}
-          onReset={() => setConfig(initialConfig)}
         />
       </div>
     </section>

@@ -69,7 +69,7 @@
   min-height: 43px;
   padding-right: 1rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   line-height: 1;
 
   &:hover {
@@ -80,7 +80,7 @@
 .lineNumber {
   padding-right: 0.8rem;
   color: rgba(255, 255, 255, 0.2);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   text-align: right;
   user-select: none;
 }
@@ -182,47 +182,8 @@
   text-transform: uppercase;
 }
 
-.footer {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  min-height: 52px;
-  padding-inline: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.32);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.56rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-
-  span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  span:last-child {
-    margin-left: auto;
-  }
-
-  i {
-    width: 0.6rem;
-    aspect-ratio: 1;
-    border: 1px solid rgba(255, 138, 103, 0.55);
-    border-radius: 2px;
-  }
-
-  span:nth-child(2) i {
-    border-radius: 999px;
-  }
-}
-
 @media (max-width: 680px) {
   .line {
     grid-template-columns: 38px minmax(760px, 1fr);
-  }
-
-  .footer span:last-child {
-    display: none;
   }
 }

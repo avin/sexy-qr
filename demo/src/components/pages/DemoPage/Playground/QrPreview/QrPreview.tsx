@@ -3,7 +3,6 @@ import {
   Check,
   Copy,
   Download,
-  RefreshCcw,
   ScanLine,
   Sparkles,
 } from 'lucide-react';
@@ -27,14 +26,12 @@ type QrPreviewProps = {
   config: PlaygroundConfig;
   svg: string;
   error: string | null;
-  onReset: () => void;
 };
 
 export function QrPreview({
   config,
   svg,
   error,
-  onReset,
 }: QrPreviewProps) {
   const [copied, setCopied] = useState(false);
 
@@ -138,11 +135,7 @@ export function QrPreview({
             )}
             {copied ? 'SVG copied' : 'Copy SVG'}
           </Button>
-          <Button size="icon-lg" variant="ghost" onClick={onReset} aria-label="Reset all values">
-            <RefreshCcw />
-          </Button>
         </div>
-        <p>Copy puts the generated SVG markup on your clipboard.</p>
       </CardFooter>
     </Card>
   );
