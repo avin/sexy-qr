@@ -72,9 +72,57 @@ const qrSvg = new QRSvg(qrCode, {
 
 const svgCode = qrSvg.svg;`;
 
+/**
+ * Branded preset — a logo is stamped into the center of the QR. The center
+ * modules are cleared with `emptyCenter()` and a `postContent` callback injects
+ * an SVG `<image>` that fills the hole, exactly like the classic master-branch
+ * demo's "cut a square out of the QR and drop a picture in".
+ *
+ * The hole is large (~38% of the matrix), so error correction is pinned to the
+ * highest level (H, ~30% recovery) to keep the code reliably scannable.
+ */
+const BRANDED_TEMPLATE = `import { QRCode, QRSvg } from 'sexy-qr';
+
+const qrCode = new QRCode({
+  content: {{content}},
+  // Highest error-correction level: a large logo cutout eats ~14% of the
+  // modules, so we need H's ~30% recovery headroom to stay scannable.
+  ecl: 'H',
+});
+
+// Carve a large, odd-sized square out of the matrix center so the logo has
+// real presence (odd size keeps it perfectly centered on a module boundary).
+const emptyCenterSize = 2 * Math.round((qrCode.size * 0.38) / 2) - 1;
+qrCode.emptyCenter(emptyCenterSize);
+
+const qrSvg = new QRSvg(qrCode, {
+  size: {{size}},
+  fill: {{fill}},
+  outerCornerRadius: 0.7,
+  innerCornerRadius: 0.45,
+  cornerBlockOuter: {
+    outerCornerRadius: 3.5,
+    innerCornerRadius: 2.1,
+  },
+  cornerBlockInner: {
+    outerCornerRadius: 1.2,
+  },
+  postContent: (qrSvg) => {
+    const start =
+      (qrSvg.matrixSize / 2 - emptyCenterSize / 2) * qrSvg.pointSize + qrSvg.pointSize / 2;
+    const size = emptyCenterSize * qrSvg.pointSize - qrSvg.pointSize;
+    const logoSrc = 'data:image/svg+xml;base64,' + btoa(BRAND_LOGO_SVG);
+    return \`<image x="\${start}" y="\${start}" width="\${size}" height="\${size}" href="\${logoSrc}" />\`;
+  },
+});
+
+const svgCode = qrSvg.svg;`;
+
 /** Picks the source template backing a given preset. */
 export function templateForPreset(presetKey: CodePresetKey): string {
-  return presetKey === 'resolver' ? RESOLVER_TEMPLATE : STANDARD_TEMPLATE;
+  if (presetKey === 'resolver') return RESOLVER_TEMPLATE;
+  if (presetKey === 'branded') return BRANDED_TEMPLATE;
+  return STANDARD_TEMPLATE;
 }
 
 /**

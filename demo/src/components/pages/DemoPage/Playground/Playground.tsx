@@ -4,7 +4,9 @@ import { CodeEditor } from './CodeEditor/CodeEditor';
 import { QrPreview } from './QrPreview/QrPreview';
 import {
   applyCodePreset,
+  brandedEmptyCenterSize,
   type CodePresetKey,
+  createBrandedPostContent,
   initialConfig,
   initialPreset,
   resolveDemoCornerRadius,
@@ -12,6 +14,7 @@ import {
 } from './playgroundConfig';
 import { serializeTemplate, templateForPreset } from './codeTemplate';
 import { controlSerializers } from './Controls';
+import { brandLogo } from './brandLogo';
 import styles from './Playground.module.scss';
 
 export function Playground() {
@@ -37,6 +40,13 @@ export function Playground() {
         content: config.content,
         ecl: config.ecl,
       });
+
+      // Branded preset: clear the center modules so the logo has a clean hole
+      // to live in (the master-branch "cut a square + drop a picture" trick).
+      if (presetKey === 'branded') {
+        qrCode.emptyCenter(brandedEmptyCenterSize(qrCode.size));
+      }
+
       const qrSvg = new QRSvg(qrCode, {
         size: config.size,
         fill: config.fill,
@@ -50,6 +60,7 @@ export function Playground() {
           outerCornerRadius: config.finderCoreRadius,
         },
         resolveCornerRadius: presetKey === 'resolver' ? resolveDemoCornerRadius : undefined,
+        postContent: presetKey === 'branded' ? createBrandedPostContent(brandLogo) : undefined,
       });
 
       return { svg: qrSvg.svg, error: null };
