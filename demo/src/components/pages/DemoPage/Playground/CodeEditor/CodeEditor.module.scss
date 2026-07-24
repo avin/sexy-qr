@@ -2,7 +2,7 @@
   min-width: 0;
   overflow: hidden;
   color: rgba(255, 255, 255, 0.72);
-  background: radial-gradient(circle at 15% 0%, rgba(255, 115, 77, 0.1), transparent 20rem), #17191b;
+  background: radial-gradient(circle at 15% 0%, rgba(255, 115, 77, 0.1), transparent 20rem), #1d1f21;
 }
 
 .header {
@@ -76,6 +76,13 @@
   display: block;
   padding-block: 1rem;
   overflow-x: auto;
+
+  /* Prism tokens are global classes — reference them unscoped so the selectors
+     keep matching after CSS-module hashing. */
+  :global(.token) {
+    font-family: inherit;
+    background: none;
+  }
 }
 
 .line {
@@ -108,20 +115,8 @@
   white-space: pre;
 }
 
-.keyword {
-  color: #df89a8;
-}
-
-.typeName {
-  color: #f0be74;
-}
-
-.property {
-  color: #83c6c3;
-}
-
-.string {
-  color: #a5cf8e;
+.text {
+  white-space: pre;
 }
 
 .inlineField {

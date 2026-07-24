@@ -5,12 +5,13 @@ import { QrPreview } from './QrPreview/QrPreview';
 import {
   applyCodePreset,
   type CodePresetKey,
-  createUsageCode,
   initialConfig,
   initialPreset,
   resolveDemoCornerRadius,
   type PlaygroundConfig,
 } from './playgroundConfig';
+import { serializeTemplate, templateForPreset } from './codeTemplate';
+import { controlSerializers } from './Controls';
 import styles from './Playground.module.scss';
 
 export function Playground() {
@@ -60,13 +61,20 @@ export function Playground() {
     }
   }, [config, presetKey]);
 
-  const usageCode = useMemo(() => createUsageCode(config, presetKey), [config, presetKey]);
+  const { template, code } = useMemo(() => {
+    const sourceTemplate = templateForPreset(presetKey);
+    return {
+      template: sourceTemplate,
+      code: serializeTemplate(sourceTemplate, config, controlSerializers),
+    };
+  }, [config, presetKey]);
 
   return (
     <section className={styles.section} id="playground">
       <div className={styles.workbench}>
         <CodeEditor
-          code={usageCode}
+          template={template}
+          code={code}
           config={config}
           presetKey={presetKey}
           onChange={updateConfig}
