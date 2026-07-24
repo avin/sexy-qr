@@ -66,7 +66,7 @@
   display: grid;
   grid-template-columns: 48px minmax(760px, 1fr);
   align-items: center;
-  min-height: 43px;
+  min-height: 36px;
   padding-right: 1rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.95rem;
@@ -88,7 +88,7 @@
 .lineContent {
   display: flex;
   align-items: center;
-  min-height: 43px;
+  min-height: 36px;
   white-space: nowrap;
 }
 

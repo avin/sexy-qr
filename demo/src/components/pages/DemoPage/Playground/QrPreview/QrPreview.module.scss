@@ -95,7 +95,6 @@
   position: relative;
   z-index: 1;
   display: grid;
-  width: min(340px, 75%);
   aspect-ratio: 1;
   place-items: center;
   padding: clamp(1.35rem, 3.5vw, 2.3rem);
@@ -219,10 +218,6 @@
 
   .stage {
     min-height: 430px;
-  }
-
-  .qrPaper {
-    width: min(280px, 78%);
   }
 
   .actions {

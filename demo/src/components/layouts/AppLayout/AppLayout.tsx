@@ -22,7 +22,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </a>
 
         <div className={styles.headerMeta}>
-          <span>SVG QR generator</span>
+          <span>SVG QR generator Library</span>
         </div>
 
         <a
@@ -39,8 +39,8 @@ export function AppLayout({ children }: AppLayoutProps) {
       {children}
 
       <footer className={styles.footer}>
-        <span>Open source under the MIT License.</span>
-        <span>Made for the web, exported as SVG.</span>
+        <span></span>
+        <span>Open source under the MIT License</span>
       </footer>
     </div>
   );
