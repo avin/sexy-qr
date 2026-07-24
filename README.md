@@ -166,6 +166,21 @@ const qrSvg = new QRSvg(qrCode, {
 | -------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
 | [![Preview](./assets/ex1.svg)](https://avin.github.io/sexy-qr) | [![Preview](./assets/ex2.svg)](https://avin.github.io/sexy-qr) | [![Preview](./assets/ex3.svg)](https://avin.github.io/sexy-qr) | [![Preview](./assets/ex4.svg)](https://avin.github.io/sexy-qr) |
 
+### Development
+
+The library and React demo use Vite and share one npm workspace:
+
+```sh
+npm install
+npm run dev
+```
+
+Build both packages with:
+
+```sh
+npm run build
+```
+
 ## License
 
 MIT © [avin](https://github.com/avin)
