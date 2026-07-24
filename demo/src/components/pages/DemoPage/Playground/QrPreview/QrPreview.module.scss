@@ -164,6 +164,7 @@
   align-items: stretch;
   flex-direction: column;
   padding: 1rem clamp(1rem, 2.5vw, 1.75rem);
+  border-radius: 0; /* гасит rounded-b-xl из CardFooter */
   background: var(--muted);
 }
 
