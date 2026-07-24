@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { QRCode, QRSvg } from 'sexy-qr';
+import { QRCode, QRSvg, QRSvgPresets } from 'sexy-qr';
 import styles from './App.module.scss';
 import GitHubLink from './GitHubLink/GitHubLink';
 import svgLogo from './svglogo';
@@ -8,13 +8,14 @@ const App = () => {
   const [content, setContent] = useState('https://github.com/avin/sexy-qr');
   const [size, setSize] = useState('380');
   const [fill, setFill] = useState('#182026');
-  const [circles, setCircles] = useState('false');
-  const [roundOuterCorners, setRoundOuterCorners] = useState('true');
-  const [roundInnerCorners, setRoundInnerCorners] = useState('true');
   const [additionalContent, setAdditionalContent] = useState('false');
   const [ecl, setEcl] = useState('M');
-  const [radiusFactor, setRadiusFactor] = useState('0.7');
-  const [cornerBlockRadiusFactor, setCornerBlockRadiusFactor] = useState('2.0');
+  const [preset, setPreset] = useState('square');
+  const [outerCornerRadius, setOuterCornerRadius] = useState('0');
+  const [innerCornerRadius, setInnerCornerRadius] = useState('0');
+  const [cornerBlockOuterOuterRadius, setCornerBlockOuterOuterRadius] = useState('0');
+  const [cornerBlockOuterInnerRadius, setCornerBlockOuterInnerRadius] = useState('0');
+  const [cornerBlockInnerOuterRadius, setCornerBlockInnerOuterRadius] = useState('0');
 
   const handleChangeAdditionalContent = useCallback((e) => {
     setAdditionalContent(e.target.value);
@@ -22,18 +23,6 @@ const App = () => {
 
   const handleChangeFill = useCallback((e) => {
     setFill(e.target.value);
-  }, []);
-
-  const handleChangeCircles = useCallback((e) => {
-    setCircles(e.target.value);
-  }, []);
-
-  const handleChangeRoundOuterCorners = useCallback((e) => {
-    setRoundOuterCorners(e.target.value);
-  }, []);
-
-  const handleChangeRoundInnerCorners = useCallback((e) => {
-    setRoundInnerCorners(e.target.value);
   }, []);
 
   const handleChangeContent = useCallback((e) => {
@@ -48,12 +37,15 @@ const App = () => {
     setEcl(e.target.value);
   }, []);
 
-  const handleChangeRadiusFactor = useCallback((e) => {
-    setRadiusFactor(e.target.value);
-  }, []);
-
-  const handleChangeCornerBlockRadiusFactor = useCallback((e) => {
-    setCornerBlockRadiusFactor(e.target.value);
+  const handleChangePreset = useCallback((e) => {
+    const name = e.target.value;
+    const selectedPreset = QRSvgPresets[name];
+    setPreset(name);
+    setOuterCornerRadius(String(selectedPreset.outerCornerRadius));
+    setInnerCornerRadius(String(selectedPreset.innerCornerRadius));
+    setCornerBlockOuterOuterRadius(String(selectedPreset.cornerBlockOuter.outerCornerRadius));
+    setCornerBlockOuterInnerRadius(String(selectedPreset.cornerBlockOuter.innerCornerRadius));
+    setCornerBlockInnerOuterRadius(String(selectedPreset.cornerBlockInner.outerCornerRadius));
   }, []);
 
   const svgCode = useMemo(() => {
@@ -79,13 +71,18 @@ const App = () => {
     }
 
     const qrSvg = new QRSvg(qrCode, {
-      fill: fill,
-      cornerBlocksAsCircles: circles === 'true',
-      roundOuterCorners: roundOuterCorners === 'true',
-      roundInnerCorners: roundInnerCorners === 'true',
+      ...QRSvgPresets[preset],
+      fill,
       size: Number(size) || 1,
-      radiusFactor,
-      cornerBlockRadiusFactor,
+      outerCornerRadius: Number(outerCornerRadius),
+      innerCornerRadius: Number(innerCornerRadius),
+      cornerBlockOuter: {
+        outerCornerRadius: Number(cornerBlockOuterOuterRadius),
+        innerCornerRadius: Number(cornerBlockOuterInnerRadius),
+      },
+      cornerBlockInner: {
+        outerCornerRadius: Number(cornerBlockInnerOuterRadius),
+      },
       preContent: `<!-- QR Content: ${content} -->`,
       postContent: additionalContent === 'true' ? additionalContentFunc : undefined,
     });
@@ -93,13 +90,14 @@ const App = () => {
   }, [
     content,
     ecl,
-    radiusFactor,
-    cornerBlockRadiusFactor,
+    preset,
+    outerCornerRadius,
+    innerCornerRadius,
+    cornerBlockOuterOuterRadius,
+    cornerBlockOuterInnerRadius,
+    cornerBlockInnerOuterRadius,
     size,
-    circles,
     fill,
-    roundOuterCorners,
-    roundInnerCorners,
     additionalContent,
   ]);
 
@@ -140,44 +138,13 @@ const App = () => {
         <div>
           <div className={styles.controls}>
             <div>
-              <label htmlFor="circles">CornerBlocksAsCircles:</label>
-              <select
-                name="circles"
-                id="circles"
-                className={styles.select}
-                onChange={handleChangeCircles}
-                value={circles}
-              >
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="circles">RoundOuterCorners:</label>
-              <select
-                name="roundOuterCorners"
-                id="roundOuterCorners"
-                className={styles.select}
-                onChange={handleChangeRoundOuterCorners}
-                value={roundOuterCorners}
-              >
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="circles">RoundInnerCorners:</label>
-              <select
-                name="roundInnerCorners"
-                id="roundInnerCorners"
-                className={styles.select}
-                onChange={handleChangeRoundInnerCorners}
-                value={roundInnerCorners}
-              >
-                <option value="true">Yes</option>
-                <option value="false">No</option>
+              <label htmlFor="preset">Preset:</label>
+              <select name="preset" id="preset" className={styles.select} onChange={handleChangePreset} value={preset}>
+                {Object.keys(QRSvgPresets).map((name) => (
+                  <option value={name} key={name}>
+                    {name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -193,32 +160,74 @@ const App = () => {
             </div>
 
             <div>
-              <label htmlFor="radiusFactor">RadiusFactor:</label>
+              <label htmlFor="outerCornerRadius">OuterCornerRadius:</label>
               <input
                 className={styles.range}
                 type="range"
-                id="radiusFactor"
-                name="radiusFactor"
+                id="outerCornerRadius"
+                name="outerCornerRadius"
                 min="0"
                 max="1"
                 step="0.1"
-                value={radiusFactor}
-                onChange={handleChangeRadiusFactor}
+                value={outerCornerRadius}
+                onChange={(e) => setOuterCornerRadius(e.target.value)}
               />
             </div>
 
             <div>
-              <label htmlFor="cornerBlockRadiusFactor">CornerBlockRadiusFactor:</label>
+              <label htmlFor="innerCornerRadius">InnerCornerRadius:</label>
               <input
                 className={styles.range}
                 type="range"
-                id="cornerBlockRadiusFactor"
-                name="cornerBlockRadiusFactor"
+                id="innerCornerRadius"
+                name="innerCornerRadius"
+                min="0"
+                max="1"
+                step="0.1"
+                value={innerCornerRadius}
+                onChange={(e) => setInnerCornerRadius(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cornerBlockOuterOuterRadius">CornerBlockOuter / outer:</label>
+              <input
+                className={styles.range}
+                type="range"
+                id="cornerBlockOuterOuterRadius"
+                min="0"
+                max="7"
+                step="0.1"
+                value={cornerBlockOuterOuterRadius}
+                onChange={(e) => setCornerBlockOuterOuterRadius(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cornerBlockOuterInnerRadius">CornerBlockOuter / inner:</label>
+              <input
+                className={styles.range}
+                type="range"
+                id="cornerBlockOuterInnerRadius"
+                min="0"
+                max="5"
+                step="0.1"
+                value={cornerBlockOuterInnerRadius}
+                onChange={(e) => setCornerBlockOuterInnerRadius(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cornerBlockInnerOuterRadius">CornerBlockInner / outer:</label>
+              <input
+                className={styles.range}
+                type="range"
+                id="cornerBlockInnerOuterRadius"
                 min="0"
                 max="3"
                 step="0.1"
-                value={cornerBlockRadiusFactor}
-                onChange={handleChangeCornerBlockRadiusFactor}
+                value={cornerBlockInnerOuterRadius}
+                onChange={(e) => setCornerBlockInnerOuterRadius(e.target.value)}
               />
             </div>
 
@@ -247,7 +256,7 @@ const App = () => {
             </div>
 
             <div>
-              <label htmlFor="circles">AdditionalContent:</label>
+              <label htmlFor="additionalContent">AdditionalContent:</label>
               <select
                 name="additionalContent"
                 id="additionalContent"
