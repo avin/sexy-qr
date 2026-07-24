@@ -1,0 +1,29 @@
+.section {
+  max-width: 1520px;
+  margin-top: 3rem;
+  margin-inline: auto;
+  scroll-margin-top: 1rem;
+}
+
+.workbench {
+  display: grid;
+  grid-template-columns: minmax(600px, 1.08fr) minmax(440px, 0.92fr);
+  min-height: 780px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  box-shadow: 0 30px 90px rgba(62, 43, 26, 0.12);
+}
+
+@media (max-width: 1120px) {
+  .workbench {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .workbench {
+    min-height: 0;
+    border-radius: 1rem;
+  }
+}

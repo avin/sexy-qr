@@ -38,17 +38,61 @@ npm install sexy-qr
 
 #### Options
 
-| Field                     | Type              | Description                               |
-| ------------------------- | ----------------- | ----------------------------------------- |
-| `fill`                    | `string`          | SVG fill color                            |
-| `size`                    | `number`          | Size of SVG in px                         |
-| `radiusFactor`            | `number`          | Factor of points corner radius (0-1)      |
-| `cornerBlockRadiusFactor` | `number`          | Factor of big squares corner radius (0-3) |
-| `cornerBlocksAsCircles`   | `boolean`         | Draw big corner squares as circles        |
-| `roundOuterCorners`       | `boolean`         | Round outer corners                       |
-| `roundInnerCorners`       | `boolean`         | Round inner corners                       |
-| `preContent`              | `string` / `func` | Pre content of SVG code                   |
-| `postContent`             | `string` / `func` | Post content of SVG code                  |
+| Field                                | Type              | Description                                     |
+| ------------------------------------ | ----------------- | ----------------------------------------------- |
+| `fill`                               | `string`          | SVG fill color                                  |
+| `size`                               | `number`          | Size of SVG in px                               |
+| `outerCornerRadius`                  | `number`          | Radius of convex corners, in QR-cell diameters  |
+| `innerCornerRadius`                  | `number`          | Radius of concave corners, in QR-cell diameters |
+| `cornerBlockOuter`                   | `object`          | Radii for the outer ring of each corner block   |
+| `cornerBlockOuter.outerCornerRadius` | `number`          | Radius of the ring's convex corners             |
+| `cornerBlockOuter.innerCornerRadius` | `number`          | Radius of the ring's concave corners            |
+| `cornerBlockInner`                   | `object`          | Radii for the solid center of each corner block |
+| `cornerBlockInner.outerCornerRadius` | `number`          | Radius of the center's convex corners           |
+| `resolveCornerRadius`                | `function`        | Override the radius of any individual corner    |
+| `preContent`                         | `string` / `func` | Pre content of SVG code                         |
+| `postContent`                        | `string` / `func` | Post content of SVG code                        |
+
+All radii default to `0`. A radius of `1` fully rounds a one-cell-wide
+shape, so an isolated QR cell becomes a circle. Larger values use the same
+cell-relative scale: `3` fully rounds a `3 × 3` square. Negative values are
+clamped to `0`, and values larger than the local contour permits are clamped
+to a full rounding. Non-finite or non-number values throw a `TypeError`.
+
+`resolveCornerRadius` runs for every contour corner. Return a number to
+override that corner's radius, or `undefined` to retain `defaultRadius`.
+The returned radius uses the same QR-cell-relative scale as the other radius
+options.
+
+```js
+const qrSvg = new QRSvg(qrCode, {
+  size: 380,
+  resolveCornerRadius: (cornerCtx) => {
+    const isTargetCorner =
+      cornerCtx.region === 'cornerBlock' &&
+      cornerCtx.block === 'topRight' &&
+      cornerCtx.part === 'ring' &&
+      cornerCtx.corner === 'bottomLeft';
+
+    if (!isTargetCorner) {
+      return cornerCtx.defaultRadius;
+    }
+
+    return cornerCtx.contour === 'outer' ? 2 : 1;
+  },
+});
+```
+
+The callback receives:
+
+- `region`: `'data'` or `'cornerBlock'`
+- `block`: `'topLeft'`, `'topRight'`, or `'bottomLeft'`
+- `part`: `'ring'` or `'center'`
+- `contour`: `'outer'` or `'inner'`
+- `corner`: `'topLeft'`, `'topRight'`, `'bottomRight'`, or `'bottomLeft'`
+- `vertex`: the contour vertex in QR-cell coordinates
+- `cell`: the associated QR cell coordinates
+- `defaultRadius`: the radius selected by the regular options
 
 #### Properties
 
@@ -61,7 +105,7 @@ npm install sexy-qr
 ## Usage
 
 ```js
-import { QRCode, QRSvg } from 'sexy-qr';
+import { QRCode, QRSvg, QRSvgPresets } from 'sexy-qr';
 
 const svgCode = (() => {
   const qrCode = new QRCode({
@@ -70,13 +114,9 @@ const svgCode = (() => {
   });
 
   const qrSvg = new QRSvg(qrCode, {
-    fill: '#182026',
-    cornerBlocksAsCircles: true,
+    ...QRSvgPresets.roundedWithCircleCornerBlocks,
     size: 380, // px
-    radiusFactor: 0.75, // 0-1
-    cornerBlockRadiusFactor: 2, // 0-3
-    roundOuterCorners: true,
-    roundInnerCorners: true,
+    fill: '#182026',
     preContent: '<!-- QR Code -->',
   });
 
@@ -84,11 +124,62 @@ const svgCode = (() => {
 })();
 ```
 
+#### Presets
+
+`QRSvgPresets` provides immutable rounding configurations that can be mixed
+into the options object with the spread operator:
+
+```js
+const qrSvg = new QRSvg(qrCode, {
+  ...QRSvgPresets.circleCornerBlocks,
+  size: 380,
+  fill: '#182026',
+});
+```
+
+Available presets:
+
+- `square`
+- `rounded`
+- `circleCornerBlocks`
+- `roundedWithCircleCornerBlocks`
+
+Object spread is shallow. To override one nested preset value while retaining
+the others, spread that nested object explicitly:
+
+```js
+const preset = QRSvgPresets.circleCornerBlocks;
+
+const qrSvg = new QRSvg(qrCode, {
+  ...preset,
+  cornerBlockOuter: {
+    ...preset.cornerBlockOuter,
+    outerCornerRadius: 2,
+  },
+  size: 380,
+});
+```
+
 ## Demo
 
 | Example 1                                                      | Example 2                                                      | Example 3                                                      | Example 4                                                      |
 | -------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
 | [![Preview](./assets/ex1.svg)](https://avin.github.io/sexy-qr) | [![Preview](./assets/ex2.svg)](https://avin.github.io/sexy-qr) | [![Preview](./assets/ex3.svg)](https://avin.github.io/sexy-qr) | [![Preview](./assets/ex4.svg)](https://avin.github.io/sexy-qr) |
+
+### Development
+
+The library and React demo use Vite and share one npm workspace:
+
+```sh
+npm install
+npm run dev
+```
+
+Build both packages with:
+
+```sh
+npm run build
+```
 
 ## License
 

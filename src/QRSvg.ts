@@ -1,34 +1,84 @@
 import { getProp, round, neighborOffsets, contour } from './utils';
 import { QRCode } from './QRCode';
 
-type QRSvgOptions = {
+export type CornerPosition = 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft';
+export type CornerContour = 'outer' | 'inner';
+export type CornerBlockPosition = 'topLeft' | 'topRight' | 'bottomLeft';
+export type CornerBlockPart = 'ring' | 'center';
+
+export type CornerContext = {
+  region: 'data' | 'cornerBlock';
+  block?: CornerBlockPosition;
+  part?: CornerBlockPart;
+  contour: CornerContour;
+  corner: CornerPosition;
+  vertex: Point;
+  cell: Point;
+  defaultRadius: number;
+};
+
+export type QRSvgOptions = {
   size: number;
-  radiusFactor: number;
-  cornerBlockRadiusFactor?: number;
-  roundOuterCorners: boolean;
-  roundInnerCorners: boolean;
-  cornerBlocksAsCircles: boolean;
+  fill?: string;
+  outerCornerRadius?: number;
+  innerCornerRadius?: number;
+  cornerBlockOuter?: {
+    outerCornerRadius?: number;
+    innerCornerRadius?: number;
+  };
+  cornerBlockInner?: {
+    outerCornerRadius?: number;
+  };
+  resolveCornerRadius?: (cornerCtx: CornerContext) => number | undefined;
+  preContent?: string | ((qrSvg: QRSvg) => string);
+  postContent?: string | ((qrSvg: QRSvg) => string);
+};
+
+type NormalizedQRSvgOptions = {
+  size: number;
   fill: string;
-  preContent?: string | ((QRSvg) => string);
-  postContent?: string | ((QRSvg) => string);
+  outerCornerRadius: number;
+  innerCornerRadius: number;
+  cornerBlockOuter: {
+    outerCornerRadius: number;
+    innerCornerRadius: number;
+  };
+  cornerBlockInner: {
+    outerCornerRadius: number;
+  };
+  resolveCornerRadius?: (cornerCtx: CornerContext) => number | undefined;
+  preContent?: string | ((qrSvg: QRSvg) => string);
+  postContent?: string | ((qrSvg: QRSvg) => string);
 };
 
 type Pride = 1 | 0;
+type Point = { x: number; y: number };
+
+type CornerBlockCellInfo = {
+  position: CornerBlockPosition;
+  part: 'outer' | 'inner';
+  origin: Point;
+};
 
 type Cell = {
   pride: Pride;
   x: number;
   y: number;
   blockId?: string;
-  isCornerBlock: boolean;
+  cornerBlock?: CornerBlockCellInfo;
+};
+
+type CornerRadii = {
+  outer: number;
+  inner: number;
 };
 
 type LineSegment = {
   processed: boolean;
-  p1: { x: number; y: number };
-  p2: { x: number; y: number };
+  p1: Point;
+  p2: Point;
   cell: Cell;
-  cr: number;
+  radii: CornerRadii;
 };
 
 type LineSegmentsWithCrops = LineSegment[] & { crops?: LineSegment[][] };
@@ -43,43 +93,106 @@ const findNeighbors = (matrix: Cell[][], cell: Cell, pride: Pride, expectCells: 
       const neighborCell = getProp(matrix, [neighborCoord.y, neighborCoord.x]);
 
       if (neighborCell && neighborCell.pride === pride) {
-        const pride = neighborCell.pride;
-        findNeighbors(matrix, neighborCell, pride, expectCells);
+        findNeighbors(matrix, neighborCell, neighborCell.pride, expectCells);
       }
     }
   }
 };
 
+const normalizeRadius = (value: unknown, optionPath: string): number => {
+  if (value === undefined) {
+    return 0;
+  }
+
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new TypeError(`Expected '${optionPath}' to be a finite number!`);
+  }
+
+  return Math.max(0, value);
+};
+
+const normalizeCornerBlock = (value: unknown, optionPath: string): Record<string, unknown> => {
+  if (value === undefined) {
+    return {};
+  }
+
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new TypeError(`Expected '${optionPath}' to be an object!`);
+  }
+
+  return value as Record<string, unknown>;
+};
+
+const getCornerBlockInfo = (x: number, y: number, matrixSize: number): CornerBlockCellInfo | undefined => {
+  const origins = [
+    { position: 'topLeft', x: 0, y: 0 },
+    { position: 'topRight', x: matrixSize - 7, y: 0 },
+    { position: 'bottomLeft', x: 0, y: matrixSize - 7 },
+  ] as const;
+
+  for (const origin of origins) {
+    const localX = x - origin.x;
+    const localY = y - origin.y;
+
+    if (localX < 0 || localX > 6 || localY < 0 || localY > 6) {
+      continue;
+    }
+
+    if (localX >= 2 && localX <= 4 && localY >= 2 && localY <= 4) {
+      return {
+        position: origin.position,
+        part: 'inner',
+        origin: { x: origin.x, y: origin.y },
+      };
+    }
+
+    if (localX === 0 || localX === 6 || localY === 0 || localY === 6) {
+      return {
+        position: origin.position,
+        part: 'outer',
+        origin: { x: origin.x, y: origin.y },
+      };
+    }
+  }
+
+  return undefined;
+};
+
 export class QRSvg {
-  private options: QRSvgOptions = {
-    size: 0,
-    radiusFactor: 0.75,
-    roundOuterCorners: true,
-    roundInnerCorners: true,
-    cornerBlocksAsCircles: false,
-    fill: 'currentColor',
-  };
+  private readonly options: NormalizedQRSvgOptions;
 
   private matrix!: Cell[][];
 
   paths: string[] = [];
 
-  private readonly matrixSize!: number;
+  readonly matrixSize: number;
 
   private lines: Record<string, LineSegmentsWithCrops> = {};
 
   private lastUniqId = 0;
 
-  readonly pointSize!: number;
+  readonly pointSize: number;
 
-  constructor(qrCode: QRCode, options: Partial<QRSvgOptions>) {
-    for (const i in options) {
-      this.options[i] = options[i];
-    }
+  constructor(qrCode: QRCode, options: QRSvgOptions) {
+    const cornerBlockOuter = normalizeCornerBlock(options.cornerBlockOuter, 'cornerBlockOuter');
+    const cornerBlockInner = normalizeCornerBlock(options.cornerBlockInner, 'cornerBlockInner');
 
-    if (this.options.cornerBlockRadiusFactor === undefined) {
-      this.options.cornerBlockRadiusFactor = this.options.radiusFactor;
-    }
+    this.options = {
+      size: options.size,
+      fill: options.fill ?? 'currentColor',
+      outerCornerRadius: normalizeRadius(options.outerCornerRadius, 'outerCornerRadius'),
+      innerCornerRadius: normalizeRadius(options.innerCornerRadius, 'innerCornerRadius'),
+      cornerBlockOuter: {
+        outerCornerRadius: normalizeRadius(cornerBlockOuter.outerCornerRadius, 'cornerBlockOuter.outerCornerRadius'),
+        innerCornerRadius: normalizeRadius(cornerBlockOuter.innerCornerRadius, 'cornerBlockOuter.innerCornerRadius'),
+      },
+      cornerBlockInner: {
+        outerCornerRadius: normalizeRadius(cornerBlockInner.outerCornerRadius, 'cornerBlockInner.outerCornerRadius'),
+      },
+      resolveCornerRadius: options.resolveCornerRadius,
+      preContent: options.preContent,
+      postContent: options.postContent,
+    };
 
     if (!(this.options.size > 0)) {
       throw new Error("Expected 'size' value to be higher than zero!");
@@ -88,22 +201,17 @@ export class QRSvg {
     this.matrixSize = qrCode.size;
     this.pointSize = this.options.size / this.matrixSize;
 
-    this.matrix = (() => {
-      const result: Cell[][] = [];
-      qrCode.matrix.forEach((row, rowIdx) => {
-        result[rowIdx] = [];
-        row.forEach((val, idx) => {
-          result[rowIdx][idx] = {
-            pride: val ? 1 : 0,
-            x: idx,
-            y: rowIdx,
-            blockId: undefined,
-            isCornerBlock: false,
-          } as Cell;
-        });
-      });
-      return result;
-    })();
+    this.matrix = qrCode.matrix.map((row, y) =>
+      row.map(
+        (value, x): Cell => ({
+          pride: value ? 1 : 0,
+          x,
+          y,
+          blockId: undefined,
+          cornerBlock: value ? getCornerBlockInfo(x, y, this.matrixSize) : undefined,
+        }),
+      ),
+    );
 
     this.detectBlocks();
     this.detectLines();
@@ -121,23 +229,81 @@ export class QRSvg {
           findNeighbors(matrix, currCell, 1, cells);
           const blockId = this.getUniqId();
           cells.forEach((cell) => {
-            const { x, y } = cell;
             cell.blockId = blockId;
-
-            if ((x < 8 && y < 8) || (x > this.matrixSize - 8 && y < 8) || (x < 8 && y > this.matrixSize - 8)) {
-              cell.isCornerBlock = true;
-            }
           });
         }
       }
     }
   }
 
+  private getCellRadii(cell: Cell): CornerRadii {
+    if (cell.cornerBlock?.part === 'outer') {
+      return {
+        outer: this.options.cornerBlockOuter.outerCornerRadius,
+        inner: this.options.cornerBlockOuter.innerCornerRadius,
+      };
+    }
+
+    if (cell.cornerBlock?.part === 'inner') {
+      return {
+        outer: this.options.cornerBlockInner.outerCornerRadius,
+        inner: 0,
+      };
+    }
+
+    return {
+      outer: this.options.outerCornerRadius,
+      inner: this.options.innerCornerRadius,
+    };
+  }
+
+  private getCornerPosition(vertex: Point, cell: Cell): CornerPosition {
+    const center = cell.cornerBlock
+      ? {
+          x: cell.cornerBlock.origin.x + 3.5,
+          y: cell.cornerBlock.origin.y + 3.5,
+        }
+      : {
+          x: cell.x + 0.5,
+          y: cell.y + 0.5,
+        };
+    const vertical = vertex.y < center.y ? 'top' : 'bottom';
+    const horizontal = vertex.x < center.x ? 'Left' : 'Right';
+
+    return `${vertical}${horizontal}` as CornerPosition;
+  }
+
+  private resolveCornerRadius(
+    vertex: Point,
+    cell: Cell,
+    cornerContour: CornerContour,
+    defaultRadius: number,
+  ): number {
+    const resolver = this.options.resolveCornerRadius;
+
+    if (!resolver) {
+      return defaultRadius;
+    }
+
+    const cornerBlock = cell.cornerBlock;
+    const resolvedRadius = resolver({
+      region: cornerBlock ? 'cornerBlock' : 'data',
+      block: cornerBlock?.position,
+      part: cornerBlock ? (cornerBlock.part === 'outer' ? 'ring' : 'center') : undefined,
+      contour: cornerContour,
+      corner: this.getCornerPosition(vertex, cell),
+      vertex: { ...vertex },
+      cell: { x: cell.x, y: cell.y },
+      defaultRadius,
+    });
+
+    return resolvedRadius === undefined
+      ? defaultRadius
+      : normalizeRadius(resolvedRadius, 'resolveCornerRadius return value');
+  }
+
   private detectLines() {
     const { lines, matrixSize, matrix } = this;
-
-    const pathRadius = (this.pointSize / 2) * Math.min(this.options.radiusFactor, 10);
-    const cornerBlockPathRadius = (this.pointSize / 2) * Math.min(this.options.cornerBlockRadiusFactor as number, 10);
 
     for (let y = 0; y < matrixSize; y++) {
       for (let x = 0; x < matrixSize; x++) {
@@ -146,23 +312,17 @@ export class QRSvg {
           continue;
         }
 
-        if (cell.isCornerBlock && this.options.cornerBlocksAsCircles) {
-          continue;
-        }
-
         neighborOffsets.forEach((offset, idx) => {
           const neighborCell = getProp(matrix, [y + offset[0], x + offset[1]]);
           if (!neighborCell || neighborCell.blockId !== cell.blockId) {
-            if (cell.blockId) {
-              lines[cell.blockId] = lines[cell.blockId] || [];
-              lines[cell.blockId].push({
-                processed: false,
-                p1: { y: y + contour[idx][0][0], x: x + contour[idx][0][1] },
-                p2: { y: y + contour[idx][1][0], x: x + contour[idx][1][1] },
-                cell,
-                cr: cell.isCornerBlock ? cornerBlockPathRadius : pathRadius,
-              });
-            }
+            lines[cell.blockId as string] = lines[cell.blockId as string] || [];
+            lines[cell.blockId as string].push({
+              processed: false,
+              p1: { y: y + contour[idx][0][0], x: x + contour[idx][0][1] },
+              p2: { y: y + contour[idx][1][0], x: x + contour[idx][1][1] },
+              cell,
+              radii: this.getCellRadii(cell),
+            });
           }
         });
       }
@@ -171,132 +331,133 @@ export class QRSvg {
     Object.keys(lines).forEach((key) => {
       const line = lines[key];
 
-      const proc = (py, px, result, oCell) => {
-        const nextSegs = line
-          .filter((seg) => {
-            if (!seg.processed) {
-              if ((seg.p1.y === py && seg.p1.x === px) || (seg.p2.y === py && seg.p2.x === px)) {
-                return true;
-              }
-            }
-            return false;
-          })
-          .sort((a, b) => {
-            if (a.cell === oCell) {
-              return -1;
-            }
-            return 1;
-          });
+      const processSegments = (py: number, px: number, result: LineSegment[], originalCell: Cell) => {
+        const nextSeg = line
+          .filter(
+            (seg) => !seg.processed && ((seg.p1.y === py && seg.p1.x === px) || (seg.p2.y === py && seg.p2.x === px)),
+          )
+          .sort((a, b) => (a.cell === originalCell ? -1 : b.cell === originalCell ? 1 : 0))[0];
 
-        const nextSeg = nextSegs[0];
-
-        if (nextSeg) {
-          nextSeg.processed = true;
-          let resultSeg;
-          if (nextSeg.p1.y === py && nextSeg.p1.x === px) {
-            resultSeg = { p1: nextSeg.p1, p2: nextSeg.p2, cr: nextSeg.cr };
-          } else if (nextSeg.p2.y === py && nextSeg.p2.x === px) {
-            resultSeg = { p1: nextSeg.p2, p2: nextSeg.p1, cr: nextSeg.cr };
-          }
-          result.push(resultSeg);
-          proc(resultSeg.p2.y, resultSeg.p2.x, result, nextSeg.cell);
+        if (!nextSeg) {
+          return;
         }
+
+        nextSeg.processed = true;
+        const forwards = nextSeg.p1.y === py && nextSeg.p1.x === px;
+        const resultSeg: LineSegment = {
+          ...nextSeg,
+          p1: forwards ? nextSeg.p1 : nextSeg.p2,
+          p2: forwards ? nextSeg.p2 : nextSeg.p1,
+        };
+        result.push(resultSeg);
+        processSegments(resultSeg.p2.y, resultSeg.p2.x, result, nextSeg.cell);
       };
+
       line[0].processed = true;
       const result: LineSegmentsWithCrops = [line[0]];
-      proc(line[0].p2.y, line[0].p2.x, result, line[0].cell);
+      processSegments(line[0].p2.y, line[0].p2.x, result, line[0].cell);
       lines[key] = result;
       lines[key].crops = [];
 
-      let checkCrops = true;
-      while (checkCrops) {
-        const notProcessedSeg = line.find((i) => !i.processed);
-        if (notProcessedSeg) {
-          notProcessedSeg.processed = true;
-          const cropResult = [notProcessedSeg];
-          proc(notProcessedSeg.p2.y, notProcessedSeg.p2.x, cropResult, notProcessedSeg.cell);
-          cropResult.reverse();
-          cropResult.map((seg) => {
-            const op2 = seg.p2;
-            seg.p2 = seg.p1;
-            seg.p1 = op2;
-            return seg;
-          });
-          lines[key]?.crops?.push(cropResult);
-        } else {
-          checkCrops = false;
-        }
+      let notProcessedSeg = line.find((segment) => !segment.processed);
+      while (notProcessedSeg) {
+        notProcessedSeg.processed = true;
+        const cropResult: LineSegment[] = [notProcessedSeg];
+        processSegments(notProcessedSeg.p2.y, notProcessedSeg.p2.x, cropResult, notProcessedSeg.cell);
+        cropResult.reverse();
+        cropResult.forEach((segment) => {
+          const p2 = segment.p2;
+          segment.p2 = segment.p1;
+          segment.p1 = p2;
+        });
+        lines[key].crops?.push(cropResult);
+        notProcessedSeg = line.find((segment) => !segment.processed);
       }
     });
   }
 
-  private getDir(seg) {
-    if (seg.p1.x === seg.p2.x) {
-      if (seg.p1.y > seg.p2.y) {
-        return 'sn';
-      }
-      return 'ns';
-    }
-    if (seg.p1.y === seg.p2.y) {
-      if (seg.p1.x > seg.p2.x) {
-        return 'ew';
-      }
-      return 'we';
-    }
+  private getDirection(segment: LineSegment): Point {
+    return {
+      x: segment.p2.x - segment.p1.x,
+      y: segment.p2.y - segment.p1.y,
+    };
   }
 
-  private getSubPath(seg, prevSeg, roundOuterCorners, roundInnerCorners) {
-    const { pointSize } = this;
+  private getLoopPath(line: LineSegment[]): string {
+    const corners = line
+      .map((segment, index) => {
+        const previousSegment = line[index - 1] || line[line.length - 1];
+        const incoming = this.getDirection(previousSegment);
+        const outgoing = this.getDirection(segment);
+        const crossProduct = incoming.x * outgoing.y - incoming.y * outgoing.x;
 
-    let {
-      p1: { x, y },
-      cr,
-    } = seg;
+        if (crossProduct === 0) {
+          return undefined;
+        }
 
-    x = x * pointSize;
-    y = y * pointSize;
+        return {
+          vertex: segment.p1,
+          cell: segment.cell,
+          incoming,
+          outgoing,
+          contour: (crossProduct > 0 ? 'outer' : 'inner') as CornerContour,
+          defaultRadius: crossProduct > 0 ? segment.radii.outer : segment.radii.inner,
+          sweep: crossProduct > 0 ? 1 : 0,
+        };
+      })
+      .filter((corner): corner is NonNullable<typeof corner> => corner !== undefined);
 
-    const xmcr = round(x - cr);
-    const xpcr = round(x + cr);
-
-    const ymcr = round(y - cr);
-    const ypcr = round(y + cr);
-
-    x = round(x);
-    y = round(y);
-
-    const segDir = this.getDir(seg);
-    const prevSegDir = this.getDir(prevSeg);
-
-    let path = '';
-    if (cr && roundOuterCorners && prevSegDir === 'we' && segDir === 'ns') {
-      path += `L${xmcr} ${y} `;
-      path += `Q${x} ${y} ${x} ${ypcr}`;
-    } else if (cr && roundOuterCorners && prevSegDir === 'ns' && segDir === 'ew') {
-      path += `L${x} ${ymcr} `;
-      path += `Q${x} ${y} ${xmcr} ${y}`;
-    } else if (cr && roundOuterCorners && prevSegDir === 'ew' && segDir === 'sn') {
-      path += `L${xpcr} ${y} `;
-      path += `Q${x} ${y} ${x} ${ymcr}`;
-    } else if (cr && roundOuterCorners && prevSegDir === 'sn' && segDir === 'we') {
-      path += `L${x} ${ypcr} `;
-      path += `Q${x} ${y} ${xpcr} ${y}`;
-    } else if (cr && roundInnerCorners && prevSegDir === 'sn' && segDir === 'ew') {
-      path += `L${x} ${ypcr} `;
-      path += `Q${x} ${y} ${xmcr} ${y}`;
-    } else if (cr && roundInnerCorners && prevSegDir === 'ew' && segDir === 'ns') {
-      path += `L${xpcr} ${y} `;
-      path += `Q${x} ${y} ${x} ${ypcr}`;
-    } else if (cr && roundInnerCorners && prevSegDir === 'ns' && segDir === 'we') {
-      path += `L${x} ${ymcr} `;
-      path += `Q${x} ${y} ${xpcr} ${y}`;
-    } else if (cr && roundInnerCorners && prevSegDir === 'we' && segDir === 'sn') {
-      path += `L${xmcr} ${y} `;
-      path += `Q${x} ${y} ${x} ${ymcr}`;
-    } else {
-      path += `L${x} ${y} `;
+    if (corners.length === 0) {
+      return '';
     }
-    return path;
+
+    const renderedCorners = corners.map((corner, index) => {
+      const previousCorner = corners[index - 1] || corners[corners.length - 1];
+      const nextCorner = corners[index + 1] || corners[0];
+      const previousEdgeLength =
+        (Math.abs(corner.vertex.x - previousCorner.vertex.x) + Math.abs(corner.vertex.y - previousCorner.vertex.y)) *
+        this.pointSize;
+      const nextEdgeLength =
+        (Math.abs(nextCorner.vertex.x - corner.vertex.x) + Math.abs(nextCorner.vertex.y - corner.vertex.y)) *
+        this.pointSize;
+      const maximumRadius = Math.min(previousEdgeLength, nextEdgeLength) / 2;
+      const requestedRadius = this.resolveCornerRadius(
+        corner.vertex,
+        corner.cell,
+        corner.contour,
+        corner.defaultRadius,
+      );
+      const radius = Math.min((requestedRadius * this.pointSize) / 2, maximumRadius);
+
+      return {
+        ...corner,
+        radius,
+        start: {
+          x: corner.vertex.x * this.pointSize - corner.incoming.x * radius,
+          y: corner.vertex.y * this.pointSize - corner.incoming.y * radius,
+        },
+        end: {
+          x: corner.vertex.x * this.pointSize + corner.outgoing.x * radius,
+          y: corner.vertex.y * this.pointSize + corner.outgoing.y * radius,
+        },
+      };
+    });
+
+    const first = renderedCorners[0];
+    let path = `M${round(first.start.x)} ${round(first.start.y)} `;
+
+    renderedCorners.forEach((corner) => {
+      path += `L${round(corner.start.x)} ${round(corner.start.y)} `;
+
+      if (corner.radius > 0) {
+        const radius = round(corner.radius);
+        path += `A${radius} ${radius} 0 0 ${corner.sweep} ${round(corner.end.x)} ${round(corner.end.y)} `;
+      } else {
+        path += `L${round(corner.vertex.x * this.pointSize)} ${round(corner.vertex.y * this.pointSize)} `;
+      }
+    });
+
+    return `${path}Z`;
   }
 
   private getUniqId() {
@@ -304,98 +465,19 @@ export class QRSvg {
   }
 
   private generatePaths() {
-    const {
-      pointSize,
-      options: { roundOuterCorners, roundInnerCorners, cornerBlocksAsCircles },
-    } = this;
-
-    const { lines } = this;
     const paths: string[] = [];
 
-    Object.keys(lines).forEach((key) => {
-      let path = '';
-      for (const [lineIdx, line] of [lines[key], ...(lines[key].crops as LineSegment[][])].entries()) {
-        for (const [segIdx, seg] of line.entries()) {
-          let {
-            p1: { x, y },
-            cr,
-          } = seg;
-
-          x = x * pointSize;
-          y = y * pointSize;
-
-          const xpcr = round(x + cr);
-          const ypcr = round(y + cr);
-
-          x = round(x);
-          y = round(y);
-
-          const prevSeg = line[segIdx - 1] || line[line.length - 1];
-          const nextSeg = line[segIdx + 1] || line[0];
-
-          const segDir = this.getDir(seg);
-          const prevSegDir = this.getDir(prevSeg);
-
-          if (segIdx === 0) {
-            if (roundOuterCorners) {
-              if (lineIdx === 0) {
-                path += `M${xpcr} ${y} `;
-              } else {
-                path += `M${x} ${ypcr} `;
-              }
-            } else {
-              path += `M${x} ${y} `;
-            }
-          } else if (segIdx === line.length - 1) {
-            path += this.getSubPath(seg, prevSeg, roundOuterCorners, roundInnerCorners);
-            path += this.getSubPath(nextSeg, seg, roundOuterCorners, roundInnerCorners);
-            path += 'Z';
-          } else if (prevSegDir !== segDir) {
-            path += this.getSubPath(seg, prevSeg, roundOuterCorners, roundInnerCorners);
-          }
-        }
-      }
+    Object.keys(this.lines).forEach((key) => {
+      const line = this.lines[key];
+      const loops = [line, ...(line.crops || [])];
+      const path = loops.map((loop) => this.getLoopPath(loop)).join(' ');
       paths.push(`<path d="${path}"/>`);
     });
-
-    if (cornerBlocksAsCircles) {
-      const offsetSize = this.pointSize * this.matrixSize - this.pointSize * 7;
-      [
-        [0, 0],
-        [offsetSize, 0],
-        [0, offsetSize],
-      ].forEach(([ox, oy]) => {
-        const centerX = round((this.pointSize * 7) / 2 + ox);
-        const centerY = round((this.pointSize * 7) / 2 + oy);
-
-        let outerRadius = round((this.pointSize * 7) / 2);
-        const innerRadius = round((this.pointSize * 7) / 2 - this.pointSize);
-
-        // Big circle
-        paths.push(`<path d="\
-M ${centerX} ${centerY - outerRadius} \
-A ${outerRadius} ${outerRadius} 0 1 0 ${centerX} ${round(centerY + outerRadius)} \
-A ${outerRadius} ${outerRadius} 0 1 0 ${centerX} ${round(centerY - outerRadius)} \
-Z \
-M ${centerX} ${centerY - innerRadius} \
-A ${innerRadius} ${innerRadius} 0 1 1 ${centerX} ${round(centerY + innerRadius)} \
-A ${innerRadius} ${innerRadius} 0 1 1 ${centerX} ${round(centerY - innerRadius)} \
-Z" />`);
-
-        // Small circle
-        outerRadius = round((this.pointSize * 7) / 2 - this.pointSize * 2);
-        paths.push(`<path d="\
-M ${centerX} ${centerY - outerRadius} \
-A ${outerRadius} ${outerRadius} 0 1 0 ${centerX} ${round(centerY + outerRadius)} \
-A ${outerRadius} ${outerRadius} 0 1 0 ${centerX} ${round(centerY - outerRadius)} \
-Z" />`);
-      });
-    }
 
     this.paths = paths;
   }
 
-  private svgAdditionalContent(additionalContent): string {
+  private svgAdditionalContent(additionalContent: NormalizedQRSvgOptions['preContent']): string {
     if (typeof additionalContent === 'function') {
       return additionalContent(this);
     }
@@ -404,7 +486,7 @@ Z" />`);
       return additionalContent;
     }
 
-    return additionalContent || '';
+    return '';
   }
 
   get svg() {

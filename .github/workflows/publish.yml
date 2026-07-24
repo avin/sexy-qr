@@ -1,32 +1,29 @@
 name: Build and Deploy
-on: [push]
+
+on:
+  push:
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.1
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '16.13.2'
-          cache: 'yarn'
+          node-version: 24
+          cache: npm
 
-      - name: Install Yarn
-        run: npm install -g yarn@1.22.17
+      - name: Install
+        run: npm ci
 
-      - name: Install and Build
-        run: |
-          yarn
-          yarn run build
-          yarn link
-          yarn --cwd ./demo
-          yarn --cwd ./demo link sexy-qr
-          yarn --cwd ./demo run build
+      - name: Build
+        run: npm run build
 
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@4.1.7
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: demo/build
+          folder: demo/dist
