@@ -2,9 +2,7 @@
   min-width: 0;
   overflow: hidden;
   color: rgba(255, 255, 255, 0.72);
-  background:
-    radial-gradient(circle at 15% 0%, rgba(255, 115, 77, 0.1), transparent 20rem),
-    #17191b;
+  background: radial-gradient(circle at 15% 0%, rgba(255, 115, 77, 0.1), transparent 20rem), #17191b;
 }
 
 .header {
@@ -30,7 +28,7 @@
     font-weight: 520;
   }
 
-  [data-slot="button"] {
+  [data-slot='button'] {
     border-color: rgba(255, 255, 255, 0.12);
     color: rgba(255, 255, 255, 0.42);
     background: rgba(255, 255, 255, 0.04);
@@ -39,6 +37,24 @@
       color: rgba(255, 255, 255, 0.82);
       background: rgba(255, 255, 255, 0.09);
     }
+  }
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.presetSelect {
+  width: 148px;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -183,6 +199,14 @@
 }
 
 @media (max-width: 680px) {
+  .header {
+    padding-inline: 0.85rem;
+  }
+
+  .presetSelect {
+    width: 132px;
+  }
+
   .line {
     grid-template-columns: 38px minmax(760px, 1fr);
   }
