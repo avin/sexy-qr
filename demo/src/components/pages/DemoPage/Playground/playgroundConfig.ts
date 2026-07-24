@@ -80,7 +80,7 @@ export const codePresetOptions = Object.entries(codePresets).map(([value, preset
 const baseConfig = {
   content: 'https://github.com/avin/sexy-qr',
   ecl: 'M',
-  size: 420,
+  size: 320,
   fill: '#171717',
 } satisfies Omit<PlaygroundConfig, keyof RadiusConfig>;
 
