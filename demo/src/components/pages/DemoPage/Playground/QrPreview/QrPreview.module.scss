@@ -95,7 +95,6 @@
   position: relative;
   z-index: 1;
   display: grid;
-  aspect-ratio: 1;
   place-items: center;
   padding: clamp(1.35rem, 3.5vw, 2.3rem);
   border: 1px solid rgba(30, 25, 19, 0.08);
@@ -105,33 +104,12 @@
     0 28px 70px rgba(70, 47, 25, 0.16),
     0 3px 10px rgba(70, 47, 25, 0.06);
   transform: rotate(0.65deg);
-
-  &::before,
-  &::after {
-    position: absolute;
-    width: 1.2rem;
-    height: 1.2rem;
-    content: "";
-    border-color: var(--primary);
-    opacity: 0.45;
-  }
-
-  &::before {
-    top: -0.45rem;
-    left: -0.45rem;
-    border-top: 1px solid;
-    border-left: 1px solid;
-  }
-
-  &::after {
-    right: -0.45rem;
-    bottom: -0.45rem;
-    border-right: 1px solid;
-    border-bottom: 1px solid;
-  }
 }
 
-.svg,
+.svg {
+  display: block;
+}
+
 .svg svg {
   display: block;
   width: 100%;

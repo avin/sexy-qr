@@ -34,7 +34,6 @@ export function QrPreview({
   error,
 }: QrPreviewProps) {
   const [copied, setCopied] = useState(false);
-  const previewSize = 40 + ((config.size - 180) / (900 - 180)) * 30;
 
   useEffect(() => {
     if (!copied) return;
@@ -91,14 +90,12 @@ export function QrPreview({
             <ScanLine />
             Live render
           </div>
-          <div
-            className={styles.qrPaper}
-            style={{ width: `${previewSize}%` }}
-          >
+          <div className={styles.qrPaper}>
             {svg ? (
               <div
                 className={styles.svg}
                 aria-label="Generated QR code preview"
+                style={{ width: `${config.size}px`, height: `${config.size}px` }}
                 dangerouslySetInnerHTML={{ __html: svg }}
               />
             ) : (
