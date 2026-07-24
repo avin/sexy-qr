@@ -221,43 +221,51 @@ export function CodeEditor({ code, config, presetKey, onChange, onPresetChange }
               <Property>resolveCornerRadius</Property>: (corner) =&gt; {'{'}
             </CodeLine>
             <CodeLine number={14} indent={2}>
-              <Keyword>if</Keyword> (
+              <Keyword>const</Keyword> isCornerBlockRing = corner.
+              <Property>region</Property> === <span className={styles.string}>&apos;cornerBlock&apos;</span> &amp;&amp;
+              corner.<Property>part</Property> === <span className={styles.string}>&apos;ring&apos;</span>;
             </CodeLine>
-            <CodeLine number={15} indent={3}>
-              corner.<Property>region</Property> === <span className={styles.string}>&apos;cornerBlock&apos;</span>{' '}
-              &amp;&amp;
-            </CodeLine>
-            <CodeLine number={16} indent={3}>
-              corner.<Property>block</Property> === <span className={styles.string}>&apos;topRight&apos;</span>{' '}
-              &amp;&amp;
+            <CodeLine number={15} />
+            <CodeLine number={16} indent={2}>
+              <Keyword>const</Keyword> isOutwardCorner =
             </CodeLine>
             <CodeLine number={17} indent={3}>
-              corner.<Property>part</Property> === <span className={styles.string}>&apos;ring&apos;</span> &amp;&amp;
+              (corner.<Property>block</Property> === <span className={styles.string}>&apos;topLeft&apos;</span>{' '}
+              &amp;&amp; corner.<Property>corner</Property> ==={' '}
+              <span className={styles.string}>&apos;topLeft&apos;</span>) ||
             </CodeLine>
             <CodeLine number={18} indent={3}>
-              corner.<Property>corner</Property> === <span className={styles.string}>&apos;bottomLeft&apos;</span>
+              (corner.<Property>block</Property> === <span className={styles.string}>&apos;topRight&apos;</span>{' '}
+              &amp;&amp; corner.<Property>corner</Property> ==={' '}
+              <span className={styles.string}>&apos;topRight&apos;</span>) ||
             </CodeLine>
-            <CodeLine number={19} indent={2}>
-              ) {'{'}
+            <CodeLine number={19} indent={3}>
+              (corner.<Property>block</Property> === <span className={styles.string}>&apos;bottomLeft&apos;</span>{' '}
+              &amp;&amp; corner.
+              <Property>corner</Property> === <span className={styles.string}>&apos;bottomLeft&apos;</span>);
             </CodeLine>
-            <CodeLine number={20} indent={3}>
-              <Keyword>return</Keyword> corner.
-              <Property>contour</Property> === <span className={styles.string}>&apos;outer&apos;</span> ? 2 : 0.8;
-            </CodeLine>
+            <CodeLine number={20} />
             <CodeLine number={21} indent={2}>
+              <Keyword>if</Keyword> (isCornerBlockRing &amp;&amp; isOutwardCorner) {'{'}
+            </CodeLine>
+            <CodeLine number={22} indent={3}>
+              <Keyword>return</Keyword> corner.
+              <Property>contour</Property> === <span className={styles.string}>&apos;outer&apos;</span> ? 4.3 : 2.8;
+            </CodeLine>
+            <CodeLine number={23} indent={2}>
               {'}'}
             </CodeLine>
-            <CodeLine number={22} />
-            <CodeLine number={23} indent={2}>
+            <CodeLine number={24} />
+            <CodeLine number={25} indent={2}>
               <Keyword>return</Keyword> corner.
               <Property>defaultRadius</Property>;
             </CodeLine>
-            <CodeLine number={24} indent={1}>
+            <CodeLine number={26} indent={1}>
               {'}'},
             </CodeLine>
-            <CodeLine number={25}>{'}'});</CodeLine>
-            <CodeLine number={26} />
-            <CodeLine number={27}>
+            <CodeLine number={27}>{'}'});</CodeLine>
+            <CodeLine number={28} />
+            <CodeLine number={29}>
               <Keyword>const</Keyword>&nbsp;svgCode = qrSvg.
               <Property>svg</Property>;
             </CodeLine>

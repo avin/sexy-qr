@@ -106,13 +106,14 @@ export function resolveDemoCornerRadius(corner: {
   corner: 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft';
   defaultRadius: number;
 }) {
-  if (
-    corner.region === 'cornerBlock' &&
-    corner.block === 'topRight' &&
-    corner.part === 'ring' &&
-    corner.corner === 'bottomLeft'
-  ) {
-    return corner.contour === 'outer' ? 2 : 0.8;
+  const isCornerBlockRing = corner.region === 'cornerBlock' && corner.part === 'ring';
+  const isOutwardCorner =
+    (corner.block === 'topLeft' && corner.corner === 'topLeft') ||
+    (corner.block === 'topRight' && corner.corner === 'topRight') ||
+    (corner.block === 'bottomLeft' && corner.corner === 'bottomLeft');
+
+  if (isCornerBlockRing && isOutwardCorner) {
+    return corner.contour === 'outer' ? 4.3 : 2.8;
   }
 
   return corner.defaultRadius;
@@ -124,13 +125,15 @@ export function createUsageCode(config: PlaygroundConfig, presetKey: CodePresetK
       ? `  outerCornerRadius: 0,
   innerCornerRadius: 0,
   resolveCornerRadius: (corner) => {
-    if (
-      corner.region === 'cornerBlock' &&
-      corner.block === 'topRight' &&
-      corner.part === 'ring' &&
-      corner.corner === 'bottomLeft'
-    ) {
-      return corner.contour === 'outer' ? 2 : 0.8;
+    const isCornerBlockRing = corner.region === 'cornerBlock' && corner.part === 'ring';
+
+    const isOutwardCorner =
+      (corner.block === 'topLeft' && corner.corner === 'topLeft') ||
+      (corner.block === 'topRight' && corner.corner === 'topRight') ||
+      (corner.block === 'bottomLeft' && corner.corner === 'bottomLeft');
+
+    if (isCornerBlockRing && isOutwardCorner) {
+      return corner.contour === 'outer' ? 4.3 : 2.8;
     }
 
     return corner.defaultRadius;
