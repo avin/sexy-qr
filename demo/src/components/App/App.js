@@ -83,6 +83,19 @@ const App = () => {
       cornerBlockInner: {
         outerCornerRadius: Number(cornerBlockInnerOuterRadius),
       },
+      // resolveCornerRadius: (cornerCtx) => {
+      //   const isTargetCorner =
+      //     cornerCtx.region === 'cornerBlock' &&
+      //     cornerCtx.block === 'topRight' &&
+      //     cornerCtx.part === 'ring' &&
+      //     cornerCtx.corner === 'bottomLeft';
+      //
+      //   if (!isTargetCorner) {
+      //     return cornerCtx.defaultRadius;
+      //   }
+      //
+      //   return cornerCtx.contour === 'outer' ? 6 : 4;
+      // },
       preContent: `<!-- QR Content: ${content} -->`,
       postContent: additionalContent === 'true' ? additionalContentFunc : undefined,
     });

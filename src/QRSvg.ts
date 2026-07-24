@@ -1,6 +1,22 @@
 import { getProp, round, neighborOffsets, contour } from './utils';
 import { QRCode } from './QRCode';
 
+export type CornerPosition = 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft';
+export type CornerContour = 'outer' | 'inner';
+export type CornerBlockPosition = 'topLeft' | 'topRight' | 'bottomLeft';
+export type CornerBlockPart = 'ring' | 'center';
+
+export type CornerContext = {
+  region: 'data' | 'cornerBlock';
+  block?: CornerBlockPosition;
+  part?: CornerBlockPart;
+  contour: CornerContour;
+  corner: CornerPosition;
+  vertex: Point;
+  cell: Point;
+  defaultRadius: number;
+};
+
 export type QRSvgOptions = {
   size: number;
   fill?: string;
@@ -13,6 +29,7 @@ export type QRSvgOptions = {
   cornerBlockInner?: {
     outerCornerRadius?: number;
   };
+  resolveCornerRadius?: (cornerCtx: CornerContext) => number | undefined;
   preContent?: string | ((qrSvg: QRSvg) => string);
   postContent?: string | ((qrSvg: QRSvg) => string);
 };
@@ -29,20 +46,26 @@ type NormalizedQRSvgOptions = {
   cornerBlockInner: {
     outerCornerRadius: number;
   };
+  resolveCornerRadius?: (cornerCtx: CornerContext) => number | undefined;
   preContent?: string | ((qrSvg: QRSvg) => string);
   postContent?: string | ((qrSvg: QRSvg) => string);
 };
 
 type Pride = 1 | 0;
-type CornerBlockPart = 'outer' | 'inner';
 type Point = { x: number; y: number };
+
+type CornerBlockCellInfo = {
+  position: CornerBlockPosition;
+  part: 'outer' | 'inner';
+  origin: Point;
+};
 
 type Cell = {
   pride: Pride;
   x: number;
   y: number;
   blockId?: string;
-  cornerBlockPart?: CornerBlockPart;
+  cornerBlock?: CornerBlockCellInfo;
 };
 
 type CornerRadii = {
@@ -100,27 +123,35 @@ const normalizeCornerBlock = (value: unknown, optionPath: string): Record<string
   return value as Record<string, unknown>;
 };
 
-const getCornerBlockPart = (x: number, y: number, matrixSize: number): CornerBlockPart | undefined => {
+const getCornerBlockInfo = (x: number, y: number, matrixSize: number): CornerBlockCellInfo | undefined => {
   const origins = [
-    [0, 0],
-    [matrixSize - 7, 0],
-    [0, matrixSize - 7],
-  ];
+    { position: 'topLeft', x: 0, y: 0 },
+    { position: 'topRight', x: matrixSize - 7, y: 0 },
+    { position: 'bottomLeft', x: 0, y: matrixSize - 7 },
+  ] as const;
 
-  for (const [originX, originY] of origins) {
-    const localX = x - originX;
-    const localY = y - originY;
+  for (const origin of origins) {
+    const localX = x - origin.x;
+    const localY = y - origin.y;
 
     if (localX < 0 || localX > 6 || localY < 0 || localY > 6) {
       continue;
     }
 
     if (localX >= 2 && localX <= 4 && localY >= 2 && localY <= 4) {
-      return 'inner';
+      return {
+        position: origin.position,
+        part: 'inner',
+        origin: { x: origin.x, y: origin.y },
+      };
     }
 
     if (localX === 0 || localX === 6 || localY === 0 || localY === 6) {
-      return 'outer';
+      return {
+        position: origin.position,
+        part: 'outer',
+        origin: { x: origin.x, y: origin.y },
+      };
     }
   }
 
@@ -158,6 +189,7 @@ export class QRSvg {
       cornerBlockInner: {
         outerCornerRadius: normalizeRadius(cornerBlockInner.outerCornerRadius, 'cornerBlockInner.outerCornerRadius'),
       },
+      resolveCornerRadius: options.resolveCornerRadius,
       preContent: options.preContent,
       postContent: options.postContent,
     };
@@ -176,7 +208,7 @@ export class QRSvg {
           x,
           y,
           blockId: undefined,
-          cornerBlockPart: value ? getCornerBlockPart(x, y, this.matrixSize) : undefined,
+          cornerBlock: value ? getCornerBlockInfo(x, y, this.matrixSize) : undefined,
         }),
       ),
     );
@@ -205,14 +237,14 @@ export class QRSvg {
   }
 
   private getCellRadii(cell: Cell): CornerRadii {
-    if (cell.cornerBlockPart === 'outer') {
+    if (cell.cornerBlock?.part === 'outer') {
       return {
         outer: this.options.cornerBlockOuter.outerCornerRadius,
         inner: this.options.cornerBlockOuter.innerCornerRadius,
       };
     }
 
-    if (cell.cornerBlockPart === 'inner') {
+    if (cell.cornerBlock?.part === 'inner') {
       return {
         outer: this.options.cornerBlockInner.outerCornerRadius,
         inner: 0,
@@ -223,6 +255,51 @@ export class QRSvg {
       outer: this.options.outerCornerRadius,
       inner: this.options.innerCornerRadius,
     };
+  }
+
+  private getCornerPosition(vertex: Point, cell: Cell): CornerPosition {
+    const center = cell.cornerBlock
+      ? {
+          x: cell.cornerBlock.origin.x + 3.5,
+          y: cell.cornerBlock.origin.y + 3.5,
+        }
+      : {
+          x: cell.x + 0.5,
+          y: cell.y + 0.5,
+        };
+    const vertical = vertex.y < center.y ? 'top' : 'bottom';
+    const horizontal = vertex.x < center.x ? 'Left' : 'Right';
+
+    return `${vertical}${horizontal}` as CornerPosition;
+  }
+
+  private resolveCornerRadius(
+    vertex: Point,
+    cell: Cell,
+    cornerContour: CornerContour,
+    defaultRadius: number,
+  ): number {
+    const resolver = this.options.resolveCornerRadius;
+
+    if (!resolver) {
+      return defaultRadius;
+    }
+
+    const cornerBlock = cell.cornerBlock;
+    const resolvedRadius = resolver({
+      region: cornerBlock ? 'cornerBlock' : 'data',
+      block: cornerBlock?.position,
+      part: cornerBlock ? (cornerBlock.part === 'outer' ? 'ring' : 'center') : undefined,
+      contour: cornerContour,
+      corner: this.getCornerPosition(vertex, cell),
+      vertex: { ...vertex },
+      cell: { x: cell.x, y: cell.y },
+      defaultRadius,
+    });
+
+    return resolvedRadius === undefined
+      ? defaultRadius
+      : normalizeRadius(resolvedRadius, 'resolveCornerRadius return value');
   }
 
   private detectLines() {
@@ -320,9 +397,11 @@ export class QRSvg {
 
         return {
           vertex: segment.p1,
+          cell: segment.cell,
           incoming,
           outgoing,
-          requestedRadius: crossProduct > 0 ? segment.radii.outer : segment.radii.inner,
+          contour: (crossProduct > 0 ? 'outer' : 'inner') as CornerContour,
+          defaultRadius: crossProduct > 0 ? segment.radii.outer : segment.radii.inner,
           sweep: crossProduct > 0 ? 1 : 0,
         };
       })
@@ -342,7 +421,13 @@ export class QRSvg {
         (Math.abs(nextCorner.vertex.x - corner.vertex.x) + Math.abs(nextCorner.vertex.y - corner.vertex.y)) *
         this.pointSize;
       const maximumRadius = Math.min(previousEdgeLength, nextEdgeLength) / 2;
-      const radius = Math.min((corner.requestedRadius * this.pointSize) / 2, maximumRadius);
+      const requestedRadius = this.resolveCornerRadius(
+        corner.vertex,
+        corner.cell,
+        corner.contour,
+        corner.defaultRadius,
+      );
+      const radius = Math.min((requestedRadius * this.pointSize) / 2, maximumRadius);
 
       return {
         ...corner,

@@ -49,6 +49,7 @@ npm install sexy-qr
 | `cornerBlockOuter.innerCornerRadius` | `number`          | Radius of the ring's concave corners            |
 | `cornerBlockInner`                   | `object`          | Radii for the solid center of each corner block |
 | `cornerBlockInner.outerCornerRadius` | `number`          | Radius of the center's convex corners           |
+| `resolveCornerRadius`                | `function`        | Override the radius of any individual corner    |
 | `preContent`                         | `string` / `func` | Pre content of SVG code                         |
 | `postContent`                        | `string` / `func` | Post content of SVG code                        |
 
@@ -57,6 +58,41 @@ shape, so an isolated QR cell becomes a circle. Larger values use the same
 cell-relative scale: `3` fully rounds a `3 × 3` square. Negative values are
 clamped to `0`, and values larger than the local contour permits are clamped
 to a full rounding. Non-finite or non-number values throw a `TypeError`.
+
+`resolveCornerRadius` runs for every contour corner. Return a number to
+override that corner's radius, or `undefined` to retain `defaultRadius`.
+The returned radius uses the same QR-cell-relative scale as the other radius
+options.
+
+```js
+const qrSvg = new QRSvg(qrCode, {
+  size: 380,
+  resolveCornerRadius: (cornerCtx) => {
+    const isTargetCorner =
+      cornerCtx.region === 'cornerBlock' &&
+      cornerCtx.block === 'topRight' &&
+      cornerCtx.part === 'ring' &&
+      cornerCtx.corner === 'bottomLeft';
+
+    if (!isTargetCorner) {
+      return cornerCtx.defaultRadius;
+    }
+
+    return cornerCtx.contour === 'outer' ? 2 : 1;
+  },
+});
+```
+
+The callback receives:
+
+- `region`: `'data'` or `'cornerBlock'`
+- `block`: `'topLeft'`, `'topRight'`, or `'bottomLeft'`
+- `part`: `'ring'` or `'center'`
+- `contour`: `'outer'` or `'inner'`
+- `corner`: `'topLeft'`, `'topRight'`, `'bottomRight'`, or `'bottomLeft'`
+- `vertex`: the contour vertex in QR-cell coordinates
+- `cell`: the associated QR cell coordinates
+- `defaultRadius`: the radius selected by the regular options
 
 #### Properties
 
