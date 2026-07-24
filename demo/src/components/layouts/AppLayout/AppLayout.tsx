@@ -12,14 +12,14 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
-        <a className={styles.brand} href="/" aria-label="Sexy-QR home">
+        <div className={styles.brand} aria-label="Sexy-QR home">
           <span className={styles.mark} aria-hidden="true">
             <i />
             <i />
             <i />
           </span>
           <span>Sexy-QR</span>
-        </a>
+        </div>
 
         <div className={styles.headerMeta}>
           <span>SVG QR generator Library</span>
