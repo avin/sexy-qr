@@ -64,7 +64,7 @@ export function QrPreview({
       <CardHeader className={styles.header}>
         <div>
           <CardTitle>Live output</CardTitle>
-          <CardDescription>Your SVG refreshes with every change.</CardDescription>
+          <CardDescription>SVG refreshes with every change</CardDescription>
         </div>
         <CardAction>
           <Badge variant={error ? 'destructive' : 'secondary'}>
