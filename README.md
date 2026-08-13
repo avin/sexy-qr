@@ -1,3 +1,5 @@
+
+
 # Sexy-QR
 
 Sexy SVG QR-code generator
@@ -30,9 +32,9 @@ npm install sexy-qr
 
 #### Methods:
 
-| Method        | Values              | Description             |
-| ------------- | ------------------- | ----------------------- |
-| `emptyCenter` | (emptySize: number) | Remove points in center |
+| Method        | Values                                      | Description             |
+| ------------- | ------------------------------------------- | ----------------------- |
+| `emptyCenter` | (emptySize: number, emptySizeHeight?: number) | Remove points in center |
 
 ### `QRSvg`
 
