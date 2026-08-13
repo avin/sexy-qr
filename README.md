@@ -1,5 +1,3 @@
-
-
 # Sexy-QR
 
 Sexy SVG QR-code generator
