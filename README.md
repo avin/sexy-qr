@@ -2,7 +2,9 @@
 
 Sexy SVG QR-code generator
 
-[ >> [Online demo](https://avin.github.io/sexy-qr) << ]
+[Online demo](https://avin.github.io/sexy-qr)
+
+Use [the online builder](https://avin.github.io/svg-qr-builder/) based on this library.
 
 ## Install
 
